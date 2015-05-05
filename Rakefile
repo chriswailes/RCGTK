@@ -1,7 +1,7 @@
 # Author:      Chris Wailes <chris.wailes@gmail.com>
-# Project:     Ruby Language Toolkit
-# Date:        2011/04/06
-# Description: This is RLTK's Rakefile.
+# Project:     Ruby Code Generation Toolkit
+# Date:        2015/05/05
+# Description: This is RCGTK's Rakefile.
 
 ##############
 # Rake Tasks #
@@ -11,7 +11,7 @@
 require 'filigree/request_file'
 
 # RLTK
-require File.expand_path("../lib/rltk/version", __FILE__)
+require File.expand_path("../lib/rcgtk/version", __FILE__)
 
 ###########
 # Bundler #
@@ -90,19 +90,17 @@ end
 
 request_file('yard', 'Yard is not installed.') do
 	YARD::Rake::YardocTask.new do |t|
-		yardlib = File.join(File.dirname(__FILE__), 'yardlib/rltk.rb')
+		yardlib = File.join(File.dirname(__FILE__), 'yardlib/rcgtk.rb')
 
 		t.options	= [
 			'-e',       yardlib,
-			'--title',  'The Ruby Language Toolkit',
+			'--title',  'The Ruby Code Generation Toolkit',
 			'-m',       'markdown',
 			'-M',       'redcarpet',
 			'--private'
 		]
 
-		t.files = Dir['lib/**/*.rb'] +
-		          ['-'] +
-		          Dir['examples/kazoo/**/*.md'].sort
+		t.files = Dir['lib/**/*.rb']
 	end
 end
 
@@ -159,13 +157,13 @@ task :gen_bindings do
 	]
 
 	FFIGen.generate(
-		module_name: 'RLTK::CG::Bindings',
+		module_name: 'RCGTK::Bindings',
 		ffi_lib:     "LLVM-#{RLTK::LLVM_TARGET_VERSION}",
 		headers:     headers,
 		cflags:      `llvm-config --cflags`.split,
 		prefixes:    ['LLVM'],
 		blacklist:   deprecated,
-		output:      'lib/rltk/cg/generated_bindings.rb'
+		output:      'lib/rcgtk/generated_bindings.rb'
 	)
 end
 
@@ -176,7 +174,7 @@ task :find_bind, :part do |t, args|
 	part = Regexp.new(args[:part])
 
 	# Require the Bindings module.
-	require 'rltk/cg/bindings'
+	require 'rcgtk/bindings'
 
 	syms =
 	Symbol.all_symbols.select do |sym|
