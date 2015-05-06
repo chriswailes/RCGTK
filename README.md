@@ -14,6 +14,9 @@ Here are some reasons to use RCGTK to generate LLVM IR and native object files:
 
 * **I Eat My Own Dog Food** - I'm using RCGTK for my own projects so if there is a bug I'll most likely be the first one to know.
 
+## RCGTK Version Numbers
+
+The first two parts of the RCGTK version number correspond to the version of LLVM that the library supports.  Therefore RCGTK 3.4.* requires a LLVM 3.4 shared library.  The last number in a RCGTK version refers to the bug release number of the RCGTK library.  The last number of the version will only be incremented when RCGTK adds new bindings or fixes bugs in existing bindings.
 
 ## Code Generation
 
