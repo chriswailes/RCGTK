@@ -364,6 +364,9 @@ module RCGTK
 	# @LLVMInst fsub
 	class FSubInst                < Instruction; end
 
+	# @LLVMInst fence
+	class FenceInst               < Instruction; end
+
 	# @LLVMInst gep
 	# @see http://llvm.org/docs/GetElementPtr.html
 	class GetElementPtrInst       < Instruction; end

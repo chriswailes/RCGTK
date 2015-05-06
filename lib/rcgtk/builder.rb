@@ -817,15 +817,28 @@ module RCGTK
 		#
 		# @see http://llvm.org/docs/LangRef.html#atomic-memory-ordering-constraints
 		#
-		# @param [Symbol from _enum_atomic_rmw_bin_op_]  op             Operation to perform
-		# @param [OpaqueValue]                           addr           Address to modify
-		# @param [OpaqueValue]                           val            Value to test
-		# @param [Symbol from _enum_atomic_ordering_]    ordering       Memory ordering constraints
-		# @param [Boolean]                               single_thread  Synchronize with single thread or all threads
+		# @param [Symbol from _enum_atomic_rmw_bin_op_]  op                Operation to perform
+		# @param [OpaqueValue]                           addr              Address to modify
+		# @param [OpaqueValue]                           val               Value to test
+		# @param [Symbol from _enum_atomic_ordering_]    ordering          Memory ordering constraints
+		# @param [Boolean]                               is_single_thread  Synchronize with single thread or all threads
 		#
 		# @return [AtomicRMWInst]
 		def atomic_rmw(op, addr, val, ordering, single_thread)
-			AtomicRMWInst.new(Bindings.build_atomic_rmw(@ptr, op, addr, val, ordering, single_thread.to_i))
+			AtomicRMWInst.new(Bindings.build_atomic_rmw(@ptr, op, addr, val, ordering, is_single_thread.to_i))
+		end
+
+		# Create a fence instruction
+		#
+		# @see http://llvm.org/docs/LangRef.html#atomic-memory-ordering-constraints
+		#
+		# @param [Symbol from _enum_atomic_ordering_]  ordering          Memory ordering constraints
+		# @param [Boolean]                             is_single_thread  If this instruction is for a single thread
+		# @param [String]                              name              Name of the result in LLVM IR
+		#
+		# @return [FenceInst]
+		def fence(ordering, is_single_thread, name = '')
+			FenceInst.new(Bindings.build_fence(@ptr, ordering, is_single_thread.to_i, name))
 		end
 
 		###############################

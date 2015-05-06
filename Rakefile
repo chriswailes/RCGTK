@@ -163,7 +163,7 @@ task :gen_bindings do
 		cflags:      `llvm-config --cflags`.split,
 		prefixes:    ['LLVM'],
 		blacklist:   deprecated,
-		output:      'lib/rcgtk/generated_bindings.rb'
+		output:      "generated_bindings-#{RCGTK::LLVM_TARGET_VERSION}.rb"
 	)
 end
 

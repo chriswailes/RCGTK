@@ -4,7 +4,7 @@ require 'ffi'
 
 module RCGTK::Bindings
   extend FFI::Library
-  ffi_lib 'LLVM-3.4'
+  ffi_lib "LLVM-3.5"
 
   def self.attach_function(name, *_)
     begin; super; rescue FFI::NotFoundError => e
@@ -18,11 +18,33 @@ module RCGTK::Bindings
 
   DISASSEMBLER_VARIANT_KIND_ARM_LO16 = 2
 
+  DISASSEMBLER_VARIANT_KIND_ARM64_PAGE = 1
+
+  DISASSEMBLER_VARIANT_KIND_ARM64_PAGEOFF = 2
+
+  DISASSEMBLER_VARIANT_KIND_ARM64_GOTPAGE = 3
+
+  DISASSEMBLER_VARIANT_KIND_ARM64_GOTPAGEOFF = 4
+
+  DISASSEMBLER_VARIANT_KIND_ARM64_TLVP = 5
+
+  DISASSEMBLER_VARIANT_KIND_ARM64_TLVOFF = 6
+
   DISASSEMBLER_REFERENCE_TYPE_IN_OUT_NONE = 0
 
   DISASSEMBLER_REFERENCE_TYPE_IN_BRANCH = 1
 
   DISASSEMBLER_REFERENCE_TYPE_IN_P_CREL_LOAD = 2
+
+  DISASSEMBLER_REFERENCE_TYPE_IN_ARM64_ADRP = 0x100000001
+
+  DISASSEMBLER_REFERENCE_TYPE_IN_ARM64_ADD_XRI = 0x100000002
+
+  DISASSEMBLER_REFERENCE_TYPE_IN_ARM64_LDR_XUI = 0x100000003
+
+  DISASSEMBLER_REFERENCE_TYPE_IN_ARM64_LDR_XL = 0x100000004
+
+  DISASSEMBLER_REFERENCE_TYPE_IN_ARM64_ADR = 0x100000005
 
   DISASSEMBLER_REFERENCE_TYPE_OUT_SYMBOL_STUB = 1
 
@@ -40,6 +62,8 @@ module RCGTK::Bindings
 
   DISASSEMBLER_REFERENCE_TYPE_OUT_OBJC_CLASS_REF = 8
 
+  DISASSEMBLER_REFERENCE_TYPE_DE_MANGLED_NAME = 9
+
   DISASSEMBLER_OPTION_USE_MARKUP = 1
 
   DISASSEMBLER_OPTION_PRINT_IMM_HEX = 2
@@ -50,75 +74,71 @@ module RCGTK::Bindings
 
   DISASSEMBLER_OPTION_PRINT_LATENCY = 16
 
-  # The top-level container for all LLVM global data. See the LLVMContext class.
-  class OpaqueContext < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # The top-level container for all other LLVM Intermediate Representation (IR)
-  # objects.
-  #
-  # @see llvm::Module
-  class OpaqueModule < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # Each value in the LLVM IR has a type, an LLVMTypeRef.
-  #
-  # @see llvm::Type
-  class OpaqueType < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # Represents an individual value in LLVM IR.
-  #
-  # This models llvm::Value.
-  class OpaqueValue < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # Represents a basic block of instructions in LLVM IR.
-  #
-  # This models llvm::BasicBlock.
-  class OpaqueBasicBlock < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # Represents an LLVM basic block builder.
-  #
-  # This models llvm::IRBuilder.
-  class OpaqueBuilder < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # Interface used to provide a module to JIT or interpreter.
-  # This is now just a synonym for llvm::Module, but we have to keep using the
-  # different type to keep binary compatibility.
-  class OpaqueModuleProvider < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # Used to provide a module to JIT or interpreter.
-  #
-  # @see llvm::MemoryBuffer
+  # (Not documented)
   class OpaqueMemoryBuffer < FFI::Struct
     layout :dummy, :char
   end
 
-  # @see llvm::PassManagerBase
+  # (Not documented)
+  #
+  # @method load_library_permanently(filename)
+  # @param [String] filename
+  # @return [Integer]
+  # @scope class
+  attach_function :load_library_permanently, :LLVMLoadLibraryPermanently, [:string], :int
+
+  # (Not documented)
+  class OpaqueContext < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueModule < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueType < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueValue < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueBasicBlock < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueBuilder < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueModuleProvider < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
   class OpaquePassManager < FFI::Struct
     layout :dummy, :char
   end
 
-  # @see llvm::PassRegistry
+  # (Not documented)
   class OpaquePassRegistry < FFI::Struct
     layout :dummy, :char
   end
 
-  # Used to get the users and usees of a Value.
-  #
-  # @see llvm::Use
+  # (Not documented)
   class OpaqueUse < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueDiagnosticInfo < FFI::Struct
     layout :dummy, :char
   end
 
@@ -177,6 +197,8 @@ module RCGTK::Bindings
   #
   # :uw_table ::
   #
+  # :non_lazy_bind ::
+  #
   #
   # @method _enum_attribute_
   # @return [Symbol]
@@ -206,7 +228,8 @@ module RCGTK::Bindings
     :inline_hint_attribute, 33554432,
     :stack_alignment, 469762048,
     :returns_twice, 536870912,
-    :uw_table, 1073741824
+    :uw_table, 1073741824,
+    :non_lazy_bind, 2147483648
   ]
 
   # (Not documented)
@@ -489,9 +512,9 @@ module RCGTK::Bindings
   # :dll_import ::
   #   < Like Internal, but omit from symbol table
   # :dll_export ::
-  #   < Function to be imported from DLL
+  #   < Obsolete
   # :external_weak ::
-  #   < Function to be accessible from DLL
+  #   < Obsolete
   # :ghost ::
   #   < ExternalWeak linkage description
   # :common ::
@@ -543,6 +566,27 @@ module RCGTK::Bindings
     :default, 0,
     :hidden, 1,
     :protected, 2
+  ]
+
+  # (Not documented)
+  #
+  # <em>This entry is only for documentation and no real method. The FFI::Enum can be accessed via #enum_type(:dll_storage_class).</em>
+  #
+  # === Options:
+  # :default ::
+  #
+  # :dll_import ::
+  #
+  # :dll_export ::
+  #   < Function to be imported from DLL.
+  #
+  # @method _enum_dll_storage_class_
+  # @return [Symbol]
+  # @scope class
+  enum :dll_storage_class, [
+    :default, 0,
+    :dll_import, 1,
+    :dll_export, 2
   ]
 
   # (Not documented)
@@ -749,6 +793,11 @@ module RCGTK::Bindings
   #   < Release is similar to Acquire, but with
   #                                      a barrier of the sort necessary to release
   #                                      a lock.
+  # :sequentially_consistent ::
+  #   < provides both an Acquire and a
+  #                                             Release barrier (for fences and
+  #                                             operations which both read and write
+  #                                              memory).
   #
   # @method _enum_atomic_ordering_
   # @return [Symbol]
@@ -759,7 +808,8 @@ module RCGTK::Bindings
     :monotonic, 2,
     :acquire, 4,
     :release, 5,
-    :acquire_release, 6
+    :acquire_release, 6,
+    :sequentially_consistent, 7
   ]
 
   # (Not documented)
@@ -813,7 +863,31 @@ module RCGTK::Bindings
     :u_min, 10
   ]
 
-  # @}
+  # (Not documented)
+  #
+  # <em>This entry is only for documentation and no real method. The FFI::Enum can be accessed via #enum_type(:diagnostic_severity).</em>
+  #
+  # === Options:
+  # :ds_error ::
+  #
+  # :ds_warning ::
+  #
+  # :ds_remark ::
+  #
+  # :ds_note ::
+  #
+  #
+  # @method _enum_diagnostic_severity_
+  # @return [Symbol]
+  # @scope class
+  enum :diagnostic_severity, [
+    :ds_error, 0,
+    :ds_warning, 1,
+    :ds_remark, 2,
+    :ds_note, 3
+  ]
+
+  # (Not documented)
   #
   # @method initialize_core(r)
   # @param [OpaquePassRegistry] r
@@ -821,16 +895,14 @@ module RCGTK::Bindings
   # @scope class
   attach_function :initialize_core, :LLVMInitializeCore, [OpaquePassRegistry], :void
 
-  # Deallocate and destroy all ManagedStatic variables.
-  #     @see llvm::llvm_shutdown
-  #     @see ManagedStatic
+  # (Not documented)
   #
   # @method shutdown()
   # @return [nil]
   # @scope class
   attach_function :shutdown, :LLVMShutdown, [], :void
 
-  # ===-- Error handling ----------------------------------------------------===
+  # (Not documented)
   #
   # @method create_message(message)
   # @param [String] message
@@ -846,11 +918,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_message, :LLVMDisposeMessage, [:string], :void
 
-  # Install a fatal error handler. By default, if LLVM detects a fatal error, it
-  # will call exit(1). This may not be appropriate in many contexts. For example,
-  # doing exit(1) will bypass many crash reporting/tracing system tools. This
-  # function allows you to install a callback that will be invoked prior to the
-  # call to exit(1).
+  # (Not documented)
   #
   # @method install_fatal_error_handler(handler)
   # @param [FFI::Pointer(FatalErrorHandler)] handler
@@ -858,50 +926,99 @@ module RCGTK::Bindings
   # @scope class
   attach_function :install_fatal_error_handler, :LLVMInstallFatalErrorHandler, [:pointer], :void
 
-  # Reset the fatal error handler. This resets LLVM's fatal error handling
-  # behavior to the default.
+  # (Not documented)
   #
   # @method reset_fatal_error_handler()
   # @return [nil]
   # @scope class
   attach_function :reset_fatal_error_handler, :LLVMResetFatalErrorHandler, [], :void
 
-  # Enable LLVM's built-in stack trace code. This intercepts the OS's crash
-  # signals and prints which component of LLVM you were in at the time if the
-  # crash.
+  # (Not documented)
   #
   # @method enable_pretty_stack_trace()
   # @return [nil]
   # @scope class
   attach_function :enable_pretty_stack_trace, :LLVMEnablePrettyStackTrace, [], :void
 
-  # Create a new context.
+  # (Not documented)
   #
-  # Every call to this function should be paired with a call to
-  # LLVMContextDispose() or the context will leak memory.
+  # <em>This entry is only for documentation and no real method.</em>
+  #
+  # @method _callback_diagnostic_handler_(opaque_diagnostic_info, void)
+  # @param [OpaqueDiagnosticInfo] opaque_diagnostic_info
+  # @param [FFI::Pointer(*Void)] void
+  # @return [OpaqueDiagnosticInfo]
+  # @scope class
+  callback :diagnostic_handler, [OpaqueDiagnosticInfo, :pointer], OpaqueDiagnosticInfo
+
+  # (Not documented)
+  #
+  # <em>This entry is only for documentation and no real method.</em>
+  #
+  # @method _callback_yield_callback_(opaque_context, void)
+  # @param [OpaqueContext] opaque_context
+  # @param [FFI::Pointer(*Void)] void
+  # @return [OpaqueContext]
+  # @scope class
+  callback :yield_callback, [OpaqueContext, :pointer], OpaqueContext
+
+  # (Not documented)
   #
   # @method context_create()
   # @return [OpaqueContext]
   # @scope class
   attach_function :context_create, :LLVMContextCreate, [], OpaqueContext
 
-  # Obtain the global context instance.
+  # (Not documented)
   #
   # @method get_global_context()
   # @return [OpaqueContext]
   # @scope class
   attach_function :get_global_context, :LLVMGetGlobalContext, [], OpaqueContext
 
-  # Destroy a context instance.
+  # (Not documented)
   #
-  # This should be called for every call to LLVMContextCreate() or memory
-  # will be leaked.
+  # @method context_set_diagnostic_handler(c, handler, diagnostic_context)
+  # @param [OpaqueContext] c
+  # @param [Proc(_callback_diagnostic_handler_)] handler
+  # @param [FFI::Pointer(*Void)] diagnostic_context
+  # @return [nil]
+  # @scope class
+  attach_function :context_set_diagnostic_handler, :LLVMContextSetDiagnosticHandler, [OpaqueContext, :diagnostic_handler, :pointer], :void
+
+  # (Not documented)
+  #
+  # @method context_set_yield_callback(c, callback, opaque_handle)
+  # @param [OpaqueContext] c
+  # @param [Proc(_callback_yield_callback_)] callback
+  # @param [FFI::Pointer(*Void)] opaque_handle
+  # @return [nil]
+  # @scope class
+  attach_function :context_set_yield_callback, :LLVMContextSetYieldCallback, [OpaqueContext, :yield_callback, :pointer], :void
+
+  # (Not documented)
   #
   # @method context_dispose(c)
   # @param [OpaqueContext] c
   # @return [nil]
   # @scope class
   attach_function :context_dispose, :LLVMContextDispose, [OpaqueContext], :void
+
+  # (Not documented)
+  #
+  # @method get_diag_info_description(di)
+  # @param [OpaqueDiagnosticInfo] di
+  # @return [String]
+  # @scope class
+  attach_function :get_diag_info_description, :LLVMGetDiagInfoDescription, [OpaqueDiagnosticInfo], :string
+
+  # (Not documented)
+  #
+  # @method get_diag_info_severity(di)
+  # @param [OpaqueDiagnosticInfo] di
+  # @return [Symbol from _enum_diagnostic_severity_]
+  # @scope class
+  attach_function :get_diag_info_severity, :LLVMGetDiagInfoSeverity, [OpaqueDiagnosticInfo], :diagnostic_severity
 
   # (Not documented)
   #
@@ -922,13 +1039,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_md_kind_id, :LLVMGetMDKindID, [:string, :uint], :uint
 
-  # Create a new, empty module in the global context.
-  #
-  # This is equivalent to calling LLVMModuleCreateWithNameInContext with
-  # LLVMGetGlobalContext() as the context parameter.
-  #
-  # Every invocation should be paired with LLVMDisposeModule() or memory
-  # will be leaked.
+  # (Not documented)
   #
   # @method module_create_with_name(module_id)
   # @param [String] module_id
@@ -936,10 +1047,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :module_create_with_name, :LLVMModuleCreateWithName, [:string], OpaqueModule
 
-  # Create a new, empty module in a specific context.
-  #
-  # Every invocation should be paired with LLVMDisposeModule() or memory
-  # will be leaked.
+  # (Not documented)
   #
   # @method module_create_with_name_in_context(module_id, c)
   # @param [String] module_id
@@ -948,10 +1056,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :module_create_with_name_in_context, :LLVMModuleCreateWithNameInContext, [:string, OpaqueContext], OpaqueModule
 
-  # Destroy a module instance.
-  #
-  # This must be called for every created module or memory will be
-  # leaked.
+  # (Not documented)
   #
   # @method dispose_module(m)
   # @param [OpaqueModule] m
@@ -959,9 +1064,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_module, :LLVMDisposeModule, [OpaqueModule], :void
 
-  # Obtain the data layout for a module.
-  #
-  # @see Module::getDataLayout()
+  # (Not documented)
   #
   # @method get_data_layout(m)
   # @param [OpaqueModule] m
@@ -969,9 +1072,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_data_layout, :LLVMGetDataLayout, [OpaqueModule], :string
 
-  # Set the data layout for a module.
-  #
-  # @see Module::setDataLayout()
+  # (Not documented)
   #
   # @method set_data_layout(m, triple)
   # @param [OpaqueModule] m
@@ -980,9 +1081,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_data_layout, :LLVMSetDataLayout, [OpaqueModule, :string], :void
 
-  # Obtain the target triple for a module.
-  #
-  # @see Module::getTargetTriple()
+  # (Not documented)
   #
   # @method get_target(m)
   # @param [OpaqueModule] m
@@ -990,9 +1089,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target, :LLVMGetTarget, [OpaqueModule], :string
 
-  # Set the target triple for a module.
-  #
-  # @see Module::setTargetTriple()
+  # (Not documented)
   #
   # @method set_target(m, triple)
   # @param [OpaqueModule] m
@@ -1001,9 +1098,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_target, :LLVMSetTarget, [OpaqueModule, :string], :void
 
-  # Dump a representation of a module to stderr.
-  #
-  # @see Module::dump()
+  # (Not documented)
   #
   # @method dump_module(m)
   # @param [OpaqueModule] m
@@ -1011,10 +1106,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dump_module, :LLVMDumpModule, [OpaqueModule], :void
 
-  # Print a representation of a module to a file. The ErrorMessage needs to be
-  # disposed with LLVMDisposeMessage. Returns 0 on success, 1 otherwise.
-  #
-  # @see Module::print()
+  # (Not documented)
   #
   # @method print_module_to_file(m, filename, error_message)
   # @param [OpaqueModule] m
@@ -1024,10 +1116,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :print_module_to_file, :LLVMPrintModuleToFile, [OpaqueModule, :string, :pointer], :int
 
-  # Return a string representation of the module. Use
-  # LLVMDisposeMessage to free the string.
-  #
-  # @see Module::print()
+  # (Not documented)
   #
   # @method print_module_to_string(m)
   # @param [OpaqueModule] m
@@ -1035,9 +1124,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :print_module_to_string, :LLVMPrintModuleToString, [OpaqueModule], :string
 
-  # Set inline assembly for a module.
-  #
-  # @see Module::setModuleInlineAsm()
+  # (Not documented)
   #
   # @method set_module_inline_asm(m, asm)
   # @param [OpaqueModule] m
@@ -1046,9 +1133,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_module_inline_asm, :LLVMSetModuleInlineAsm, [OpaqueModule, :string], :void
 
-  # Obtain the context to which this module is associated.
-  #
-  # @see Module::getContext()
+  # (Not documented)
   #
   # @method get_module_context(m)
   # @param [OpaqueModule] m
@@ -1056,7 +1141,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_module_context, :LLVMGetModuleContext, [OpaqueModule], OpaqueContext
 
-  # Obtain a Type from a module by its registered name.
+  # (Not documented)
   #
   # @method get_type_by_name(m, name)
   # @param [OpaqueModule] m
@@ -1065,9 +1150,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_type_by_name, :LLVMGetTypeByName, [OpaqueModule, :string], OpaqueType
 
-  # Obtain the number of operands for named metadata in a module.
-  #
-  # @see llvm::Module::getNamedMetadata()
+  # (Not documented)
   #
   # @method get_named_metadata_num_operands(m, name)
   # @param [OpaqueModule] m
@@ -1076,15 +1159,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_named_metadata_num_operands, :LLVMGetNamedMetadataNumOperands, [OpaqueModule, :string], :uint
 
-  # Obtain the named metadata operands for a module.
-  #
-  # The passed LLVMValueRef pointer should refer to an array of
-  # LLVMValueRef at least LLVMGetNamedMetadataNumOperands long. This
-  # array will be populated with the LLVMValueRef instances. Each
-  # instance corresponds to a llvm::MDNode.
-  #
-  # @see llvm::Module::getNamedMetadata()
-  # @see llvm::MDNode::getOperand()
+  # (Not documented)
   #
   # @method get_named_metadata_operands(m, name, dest)
   # @param [OpaqueModule] m
@@ -1094,10 +1169,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_named_metadata_operands, :LLVMGetNamedMetadataOperands, [OpaqueModule, :string, :pointer], :void
 
-  # Add an operand to named metadata.
-  #
-  # @see llvm::Module::getNamedMetadata()
-  # @see llvm::MDNode::addOperand()
+  # (Not documented)
   #
   # @method add_named_metadata_operand(m, name, val)
   # @param [OpaqueModule] m
@@ -1107,9 +1179,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_named_metadata_operand, :LLVMAddNamedMetadataOperand, [OpaqueModule, :string, OpaqueValue], :void
 
-  # Add a function to a module under a specified name.
-  #
-  # @see llvm::Function::Create()
+  # (Not documented)
   #
   # @method add_function(m, name, function_ty)
   # @param [OpaqueModule] m
@@ -1119,11 +1189,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_function, :LLVMAddFunction, [OpaqueModule, :string, OpaqueType], OpaqueValue
 
-  # Obtain a Function value from a Module by its name.
-  #
-  # The returned value corresponds to a llvm::Function value.
-  #
-  # @see llvm::Module::getFunction()
+  # (Not documented)
   #
   # @method get_named_function(m, name)
   # @param [OpaqueModule] m
@@ -1132,9 +1198,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_named_function, :LLVMGetNamedFunction, [OpaqueModule, :string], OpaqueValue
 
-  # Obtain an iterator to the first Function in a Module.
-  #
-  # @see llvm::Module::begin()
+  # (Not documented)
   #
   # @method get_first_function(m)
   # @param [OpaqueModule] m
@@ -1142,9 +1206,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_first_function, :LLVMGetFirstFunction, [OpaqueModule], OpaqueValue
 
-  # Obtain an iterator to the last Function in a Module.
-  #
-  # @see llvm::Module::end()
+  # (Not documented)
   #
   # @method get_last_function(m)
   # @param [OpaqueModule] m
@@ -1152,10 +1214,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_last_function, :LLVMGetLastFunction, [OpaqueModule], OpaqueValue
 
-  # Advance a Function iterator to the next Function.
-  #
-  # Returns NULL if the iterator was already at the end and there are no more
-  # functions.
+  # (Not documented)
   #
   # @method get_next_function(fn)
   # @param [OpaqueValue] fn
@@ -1163,10 +1222,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_next_function, :LLVMGetNextFunction, [OpaqueValue], OpaqueValue
 
-  # Decrement a Function iterator to the previous Function.
-  #
-  # Returns NULL if the iterator was already at the beginning and there are
-  # no previous functions.
+  # (Not documented)
   #
   # @method get_previous_function(fn)
   # @param [OpaqueValue] fn
@@ -1174,9 +1230,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_previous_function, :LLVMGetPreviousFunction, [OpaqueValue], OpaqueValue
 
-  # Obtain the enumerated type of a Type instance.
-  #
-  # @see llvm::Type:getTypeID()
+  # (Not documented)
   #
   # @method get_type_kind(ty)
   # @param [OpaqueType] ty
@@ -1184,11 +1238,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_type_kind, :LLVMGetTypeKind, [OpaqueType], :type_kind
 
-  # Whether the type has a known size.
-  #
-  # Things that don't have a size are abstract types, labels, and void.a
-  #
-  # @see llvm::Type::isSized()
+  # (Not documented)
   #
   # @method type_is_sized(ty)
   # @param [OpaqueType] ty
@@ -1196,9 +1246,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :type_is_sized, :LLVMTypeIsSized, [OpaqueType], :int
 
-  # Obtain the context to which this type instance is associated.
-  #
-  # @see llvm::Type::getContext()
+  # (Not documented)
   #
   # @method get_type_context(ty)
   # @param [OpaqueType] ty
@@ -1206,9 +1254,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_type_context, :LLVMGetTypeContext, [OpaqueType], OpaqueContext
 
-  # Dump a representation of a type to stderr.
-  #
-  # @see llvm::Type::dump()
+  # (Not documented)
   #
   # @method dump_type(val)
   # @param [OpaqueType] val
@@ -1216,10 +1262,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dump_type, :LLVMDumpType, [OpaqueType], :void
 
-  # Return a string representation of the type. Use
-  # LLVMDisposeMessage to free the string.
-  #
-  # @see llvm::Type::print()
+  # (Not documented)
   #
   # @method print_type_to_string(val)
   # @param [OpaqueType] val
@@ -1227,7 +1270,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :print_type_to_string, :LLVMPrintTypeToString, [OpaqueType], :string
 
-  # Obtain an integer type from a context with specified bit width.
+  # (Not documented)
   #
   # @method int1_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1276,8 +1319,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :int_type_in_context, :LLVMIntTypeInContext, [OpaqueContext, :uint], OpaqueType
 
-  # Obtain an integer type from the global context with a specified bit
-  # width.
+  # (Not documented)
   #
   # @method int1_type()
   # @return [OpaqueType]
@@ -1328,7 +1370,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_int_type_width, :LLVMGetIntTypeWidth, [OpaqueType], :uint
 
-  # Obtain a 16-bit floating point type from a context.
+  # (Not documented)
   #
   # @method half_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1336,7 +1378,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :half_type_in_context, :LLVMHalfTypeInContext, [OpaqueContext], OpaqueType
 
-  # Obtain a 32-bit floating point type from a context.
+  # (Not documented)
   #
   # @method float_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1344,7 +1386,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :float_type_in_context, :LLVMFloatTypeInContext, [OpaqueContext], OpaqueType
 
-  # Obtain a 64-bit floating point type from a context.
+  # (Not documented)
   #
   # @method double_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1352,7 +1394,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :double_type_in_context, :LLVMDoubleTypeInContext, [OpaqueContext], OpaqueType
 
-  # Obtain a 80-bit floating point type (X87) from a context.
+  # (Not documented)
   #
   # @method x86fp80_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1360,8 +1402,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :x86fp80_type_in_context, :LLVMX86FP80TypeInContext, [OpaqueContext], OpaqueType
 
-  # Obtain a 128-bit floating point type (112-bit mantissa) from a
-  # context.
+  # (Not documented)
   #
   # @method fp128_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1369,7 +1410,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :fp128_type_in_context, :LLVMFP128TypeInContext, [OpaqueContext], OpaqueType
 
-  # Obtain a 128-bit floating point type (two 64-bits) from a context.
+  # (Not documented)
   #
   # @method ppcfp128_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1377,9 +1418,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :ppcfp128_type_in_context, :LLVMPPCFP128TypeInContext, [OpaqueContext], OpaqueType
 
-  # Obtain a floating point type from the global context.
-  #
-  # These map to the functions in this group of the same name.
+  # (Not documented)
   #
   # @method half_type()
   # @return [OpaqueType]
@@ -1421,10 +1460,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :ppcfp128_type, :LLVMPPCFP128Type, [], OpaqueType
 
-  # Obtain a function type consisting of a specified signature.
-  #
-  # The function is defined as a tuple of a return Type, a list of
-  # parameter types, and whether the function is variadic.
+  # (Not documented)
   #
   # @method function_type(return_type, param_types, param_count, is_var_arg)
   # @param [OpaqueType] return_type
@@ -1435,7 +1471,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :function_type, :LLVMFunctionType, [OpaqueType, :pointer, :uint, :int], OpaqueType
 
-  # Returns whether a function type is variadic.
+  # (Not documented)
   #
   # @method is_function_var_arg(function_ty)
   # @param [OpaqueType] function_ty
@@ -1443,7 +1479,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_function_var_arg, :LLVMIsFunctionVarArg, [OpaqueType], :int
 
-  # Obtain the Type this function Type returns.
+  # (Not documented)
   #
   # @method get_return_type(function_ty)
   # @param [OpaqueType] function_ty
@@ -1451,7 +1487,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_return_type, :LLVMGetReturnType, [OpaqueType], OpaqueType
 
-  # Obtain the number of parameters this function accepts.
+  # (Not documented)
   #
   # @method count_param_types(function_ty)
   # @param [OpaqueType] function_ty
@@ -1459,15 +1495,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :count_param_types, :LLVMCountParamTypes, [OpaqueType], :uint
 
-  # Obtain the types of a function's parameters.
-  #
-  # The Dest parameter should point to a pre-allocated array of
-  # LLVMTypeRef at least LLVMCountParamTypes() large. On return, the
-  # first LLVMCountParamTypes() entries in the array will be populated
-  # with LLVMTypeRef instances.
-  #
-  # @param FunctionTy The function type to operate on.
-  # @param Dest Memory address of an array to be filled with result.
+  # (Not documented)
   #
   # @method get_param_types(function_ty, dest)
   # @param [OpaqueType] function_ty
@@ -1476,12 +1504,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_param_types, :LLVMGetParamTypes, [OpaqueType, :pointer], :void
 
-  # Create a new structure type in a context.
-  #
-  # A structure is specified by a list of inner elements/types and
-  # whether these can be packed together.
-  #
-  # @see llvm::StructType::create()
+  # (Not documented)
   #
   # @method struct_type_in_context(c, element_types, element_count, packed)
   # @param [OpaqueContext] c
@@ -1492,9 +1515,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :struct_type_in_context, :LLVMStructTypeInContext, [OpaqueContext, :pointer, :uint, :int], OpaqueType
 
-  # Create a new structure type in the global context.
-  #
-  # @see llvm::StructType::create()
+  # (Not documented)
   #
   # @method struct_type(element_types, element_count, packed)
   # @param [FFI::Pointer(*TypeRef)] element_types
@@ -1504,9 +1525,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :struct_type, :LLVMStructType, [:pointer, :uint, :int], OpaqueType
 
-  # Create an empty structure in a context having a specified name.
-  #
-  # @see llvm::StructType::create()
+  # (Not documented)
   #
   # @method struct_create_named(c, name)
   # @param [OpaqueContext] c
@@ -1515,9 +1534,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :struct_create_named, :LLVMStructCreateNamed, [OpaqueContext, :string], OpaqueType
 
-  # Obtain the name of a structure.
-  #
-  # @see llvm::StructType::getName()
+  # (Not documented)
   #
   # @method get_struct_name(ty)
   # @param [OpaqueType] ty
@@ -1525,9 +1542,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_struct_name, :LLVMGetStructName, [OpaqueType], :string
 
-  # Set the contents of a structure type.
-  #
-  # @see llvm::StructType::setBody()
+  # (Not documented)
   #
   # @method struct_set_body(struct_ty, element_types, element_count, packed)
   # @param [OpaqueType] struct_ty
@@ -1538,9 +1553,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :struct_set_body, :LLVMStructSetBody, [OpaqueType, :pointer, :uint, :int], :void
 
-  # Get the number of elements defined inside the structure.
-  #
-  # @see llvm::StructType::getNumElements()
+  # (Not documented)
   #
   # @method count_struct_element_types(struct_ty)
   # @param [OpaqueType] struct_ty
@@ -1548,14 +1561,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :count_struct_element_types, :LLVMCountStructElementTypes, [OpaqueType], :uint
 
-  # Get the elements within a structure.
-  #
-  # The function is passed the address of a pre-allocated array of
-  # LLVMTypeRef at least LLVMCountStructElementTypes() long. After
-  # invocation, this array will be populated with the structure's
-  # elements. The objects in the destination array will have a lifetime
-  # of the structure type itself, which is the lifetime of the context it
-  # is contained in.
+  # (Not documented)
   #
   # @method get_struct_element_types(struct_ty, dest)
   # @param [OpaqueType] struct_ty
@@ -1564,9 +1570,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_struct_element_types, :LLVMGetStructElementTypes, [OpaqueType, :pointer], :void
 
-  # Determine whether a structure is packed.
-  #
-  # @see llvm::StructType::isPacked()
+  # (Not documented)
   #
   # @method is_packed_struct(struct_ty)
   # @param [OpaqueType] struct_ty
@@ -1574,9 +1578,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_packed_struct, :LLVMIsPackedStruct, [OpaqueType], :int
 
-  # Determine whether a structure is opaque.
-  #
-  # @see llvm::StructType::isOpaque()
+  # (Not documented)
   #
   # @method is_opaque_struct(struct_ty)
   # @param [OpaqueType] struct_ty
@@ -1584,11 +1586,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_opaque_struct, :LLVMIsOpaqueStruct, [OpaqueType], :int
 
-  # Obtain the type of elements within a sequential type.
-  #
-  # This works on array, vector, and pointer types.
-  #
-  # @see llvm::SequentialType::getElementType()
+  # (Not documented)
   #
   # @method get_element_type(ty)
   # @param [OpaqueType] ty
@@ -1596,12 +1594,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_element_type, :LLVMGetElementType, [OpaqueType], OpaqueType
 
-  # Create a fixed size array type that refers to a specific type.
-  #
-  # The created type will exist in the context that its element type
-  # exists in.
-  #
-  # @see llvm::ArrayType::get()
+  # (Not documented)
   #
   # @method array_type(element_type, element_count)
   # @param [OpaqueType] element_type
@@ -1610,11 +1603,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :array_type, :LLVMArrayType, [OpaqueType, :uint], OpaqueType
 
-  # Obtain the length of an array type.
-  #
-  # This only works on types that represent arrays.
-  #
-  # @see llvm::ArrayType::getNumElements()
+  # (Not documented)
   #
   # @method get_array_length(array_ty)
   # @param [OpaqueType] array_ty
@@ -1622,12 +1611,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_array_length, :LLVMGetArrayLength, [OpaqueType], :uint
 
-  # Create a pointer type that points to a defined type.
-  #
-  # The created type will exist in the context that its pointee type
-  # exists in.
-  #
-  # @see llvm::PointerType::get()
+  # (Not documented)
   #
   # @method pointer_type(element_type, address_space)
   # @param [OpaqueType] element_type
@@ -1636,11 +1620,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pointer_type, :LLVMPointerType, [OpaqueType, :uint], OpaqueType
 
-  # Obtain the address space of a pointer type.
-  #
-  # This only works on types that represent pointers.
-  #
-  # @see llvm::PointerType::getAddressSpace()
+  # (Not documented)
   #
   # @method get_pointer_address_space(pointer_ty)
   # @param [OpaqueType] pointer_ty
@@ -1648,13 +1628,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_pointer_address_space, :LLVMGetPointerAddressSpace, [OpaqueType], :uint
 
-  # Create a vector type that contains a defined type and has a specific
-  # number of elements.
-  #
-  # The created type will exist in the context thats its element type
-  # exists in.
-  #
-  # @see llvm::VectorType::get()
+  # (Not documented)
   #
   # @method vector_type(element_type, element_count)
   # @param [OpaqueType] element_type
@@ -1663,11 +1637,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :vector_type, :LLVMVectorType, [OpaqueType, :uint], OpaqueType
 
-  # Obtain the number of elements in a vector type.
-  #
-  # This only works on types that represent vectors.
-  #
-  # @see llvm::VectorType::getNumElements()
+  # (Not documented)
   #
   # @method get_vector_size(vector_ty)
   # @param [OpaqueType] vector_ty
@@ -1675,7 +1645,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_vector_size, :LLVMGetVectorSize, [OpaqueType], :uint
 
-  # Create a void type in a context.
+  # (Not documented)
   #
   # @method void_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1683,7 +1653,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :void_type_in_context, :LLVMVoidTypeInContext, [OpaqueContext], OpaqueType
 
-  # Create a label type in a context.
+  # (Not documented)
   #
   # @method label_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1691,7 +1661,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :label_type_in_context, :LLVMLabelTypeInContext, [OpaqueContext], OpaqueType
 
-  # Create a X86 MMX type in a context.
+  # (Not documented)
   #
   # @method x86mmx_type_in_context(c)
   # @param [OpaqueContext] c
@@ -1699,8 +1669,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :x86mmx_type_in_context, :LLVMX86MMXTypeInContext, [OpaqueContext], OpaqueType
 
-  # These are similar to the above functions except they operate on the
-  # global context.
+  # (Not documented)
   #
   # @method void_type()
   # @return [OpaqueType]
@@ -1721,9 +1690,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :x86mmx_type, :LLVMX86MMXType, [], OpaqueType
 
-  # Obtain the type of a value.
-  #
-  # @see llvm::Value::getType()
+  # (Not documented)
   #
   # @method type_of(val)
   # @param [OpaqueValue] val
@@ -1731,9 +1698,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :type_of, :LLVMTypeOf, [OpaqueValue], OpaqueType
 
-  # Obtain the string name of a value.
-  #
-  # @see llvm::Value::getName()
+  # (Not documented)
   #
   # @method get_value_name(val)
   # @param [OpaqueValue] val
@@ -1741,9 +1706,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_value_name, :LLVMGetValueName, [OpaqueValue], :string
 
-  # Set the string name of a value.
-  #
-  # @see llvm::Value::setName()
+  # (Not documented)
   #
   # @method set_value_name(val, name)
   # @param [OpaqueValue] val
@@ -1752,9 +1715,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_value_name, :LLVMSetValueName, [OpaqueValue, :string], :void
 
-  # Dump a representation of a value to stderr.
-  #
-  # @see llvm::Value::dump()
+  # (Not documented)
   #
   # @method dump_value(val)
   # @param [OpaqueValue] val
@@ -1762,10 +1723,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dump_value, :LLVMDumpValue, [OpaqueValue], :void
 
-  # Return a string representation of the value. Use
-  # LLVMDisposeMessage to free the string.
-  #
-  # @see llvm::Value::print()
+  # (Not documented)
   #
   # @method print_value_to_string(val)
   # @param [OpaqueValue] val
@@ -1773,9 +1731,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :print_value_to_string, :LLVMPrintValueToString, [OpaqueValue], :string
 
-  # Replace all uses of a value with another one.
-  #
-  # @see llvm::Value::replaceAllUsesWith()
+  # (Not documented)
   #
   # @method replace_all_uses_with(old_val, new_val)
   # @param [OpaqueValue] old_val
@@ -1784,7 +1740,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :replace_all_uses_with, :LLVMReplaceAllUsesWith, [OpaqueValue, OpaqueValue], :void
 
-  # Determine whether the specified constant instance is constant.
+  # (Not documented)
   #
   # @method is_constant(val)
   # @param [OpaqueValue] val
@@ -1792,7 +1748,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_constant, :LLVMIsConstant, [OpaqueValue], :int
 
-  # Determine whether a value instance is undefined.
+  # (Not documented)
   #
   # @method is_undef(val)
   # @param [OpaqueValue] val
@@ -1800,15 +1756,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_undef, :LLVMIsUndef, [OpaqueValue], :int
 
-  # Convert value instances between types.
-  #
-  # Internally, an LLVMValueRef is "pinned" to a specific type. This
-  # series of functions allows you to cast an instance to a specific
-  # type.
-  #
-  # If the cast is not valid for the specified type, NULL is returned.
-  #
-  # @see llvm::dyn_cast_or_null<>
+  # (Not documented)
   #
   # @method is_a_argument(val)
   # @param [OpaqueValue] val
@@ -1816,7 +1764,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_argument, :LLVMIsAArgument, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_basic_block(val)
   # @param [OpaqueValue] val
@@ -1824,7 +1772,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_basic_block, :LLVMIsABasicBlock, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_inline_asm(val)
   # @param [OpaqueValue] val
@@ -1832,7 +1780,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_inline_asm, :LLVMIsAInlineAsm, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_amd_node(val)
   # @param [OpaqueValue] val
@@ -1840,7 +1788,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_amd_node, :LLVMIsAMDNode, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_amd_string(val)
   # @param [OpaqueValue] val
@@ -1848,7 +1796,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_amd_string, :LLVMIsAMDString, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_user(val)
   # @param [OpaqueValue] val
@@ -1856,7 +1804,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_user, :LLVMIsAUser, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant(val)
   # @param [OpaqueValue] val
@@ -1864,7 +1812,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant, :LLVMIsAConstant, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_block_address(val)
   # @param [OpaqueValue] val
@@ -1872,7 +1820,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_block_address, :LLVMIsABlockAddress, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_aggregate_zero(val)
   # @param [OpaqueValue] val
@@ -1880,7 +1828,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_aggregate_zero, :LLVMIsAConstantAggregateZero, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_array(val)
   # @param [OpaqueValue] val
@@ -1888,7 +1836,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_array, :LLVMIsAConstantArray, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_data_sequential(val)
   # @param [OpaqueValue] val
@@ -1896,7 +1844,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_data_sequential, :LLVMIsAConstantDataSequential, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_data_array(val)
   # @param [OpaqueValue] val
@@ -1904,7 +1852,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_data_array, :LLVMIsAConstantDataArray, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_data_vector(val)
   # @param [OpaqueValue] val
@@ -1912,7 +1860,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_data_vector, :LLVMIsAConstantDataVector, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_expr(val)
   # @param [OpaqueValue] val
@@ -1920,7 +1868,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_expr, :LLVMIsAConstantExpr, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_fp(val)
   # @param [OpaqueValue] val
@@ -1928,7 +1876,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_fp, :LLVMIsAConstantFP, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_int(val)
   # @param [OpaqueValue] val
@@ -1936,7 +1884,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_int, :LLVMIsAConstantInt, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_pointer_null(val)
   # @param [OpaqueValue] val
@@ -1944,7 +1892,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_pointer_null, :LLVMIsAConstantPointerNull, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_struct(val)
   # @param [OpaqueValue] val
@@ -1952,7 +1900,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_struct, :LLVMIsAConstantStruct, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_constant_vector(val)
   # @param [OpaqueValue] val
@@ -1960,7 +1908,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_constant_vector, :LLVMIsAConstantVector, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_global_value(val)
   # @param [OpaqueValue] val
@@ -1968,15 +1916,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_global_value, :LLVMIsAGlobalValue, [OpaqueValue], OpaqueValue
 
-  # @}
-  #
-  # @method is_a_function(val)
-  # @param [OpaqueValue] val
-  # @return [OpaqueValue]
-  # @scope class
-  attach_function :is_a_function, :LLVMIsAFunction, [OpaqueValue], OpaqueValue
-
-  # @}
+  # (Not documented)
   #
   # @method is_a_global_alias(val)
   # @param [OpaqueValue] val
@@ -1984,7 +1924,23 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_global_alias, :LLVMIsAGlobalAlias, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
+  #
+  # @method is_a_global_object(val)
+  # @param [OpaqueValue] val
+  # @return [OpaqueValue]
+  # @scope class
+  attach_function :is_a_global_object, :LLVMIsAGlobalObject, [OpaqueValue], OpaqueValue
+
+  # (Not documented)
+  #
+  # @method is_a_function(val)
+  # @param [OpaqueValue] val
+  # @return [OpaqueValue]
+  # @scope class
+  attach_function :is_a_function, :LLVMIsAFunction, [OpaqueValue], OpaqueValue
+
+  # (Not documented)
   #
   # @method is_a_global_variable(val)
   # @param [OpaqueValue] val
@@ -1992,7 +1948,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_global_variable, :LLVMIsAGlobalVariable, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_undef_value(val)
   # @param [OpaqueValue] val
@@ -2000,7 +1956,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_undef_value, :LLVMIsAUndefValue, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_instruction(val)
   # @param [OpaqueValue] val
@@ -2008,7 +1964,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_instruction, :LLVMIsAInstruction, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_binary_operator(val)
   # @param [OpaqueValue] val
@@ -2016,7 +1972,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_binary_operator, :LLVMIsABinaryOperator, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_call_inst(val)
   # @param [OpaqueValue] val
@@ -2024,7 +1980,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_call_inst, :LLVMIsACallInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_intrinsic_inst(val)
   # @param [OpaqueValue] val
@@ -2032,7 +1988,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_intrinsic_inst, :LLVMIsAIntrinsicInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_dbg_info_intrinsic(val)
   # @param [OpaqueValue] val
@@ -2040,7 +1996,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_dbg_info_intrinsic, :LLVMIsADbgInfoIntrinsic, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_dbg_declare_inst(val)
   # @param [OpaqueValue] val
@@ -2048,7 +2004,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_dbg_declare_inst, :LLVMIsADbgDeclareInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_mem_intrinsic(val)
   # @param [OpaqueValue] val
@@ -2056,7 +2012,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_mem_intrinsic, :LLVMIsAMemIntrinsic, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_mem_cpy_inst(val)
   # @param [OpaqueValue] val
@@ -2064,7 +2020,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_mem_cpy_inst, :LLVMIsAMemCpyInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_mem_move_inst(val)
   # @param [OpaqueValue] val
@@ -2072,7 +2028,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_mem_move_inst, :LLVMIsAMemMoveInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_mem_set_inst(val)
   # @param [OpaqueValue] val
@@ -2080,7 +2036,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_mem_set_inst, :LLVMIsAMemSetInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_cmp_inst(val)
   # @param [OpaqueValue] val
@@ -2088,7 +2044,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_cmp_inst, :LLVMIsACmpInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_af_cmp_inst(val)
   # @param [OpaqueValue] val
@@ -2096,7 +2052,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_af_cmp_inst, :LLVMIsAFCmpInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_ai_cmp_inst(val)
   # @param [OpaqueValue] val
@@ -2104,7 +2060,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_ai_cmp_inst, :LLVMIsAICmpInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_extract_element_inst(val)
   # @param [OpaqueValue] val
@@ -2112,7 +2068,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_extract_element_inst, :LLVMIsAExtractElementInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_get_element_ptr_inst(val)
   # @param [OpaqueValue] val
@@ -2120,7 +2076,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_get_element_ptr_inst, :LLVMIsAGetElementPtrInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_insert_element_inst(val)
   # @param [OpaqueValue] val
@@ -2128,7 +2084,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_insert_element_inst, :LLVMIsAInsertElementInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_insert_value_inst(val)
   # @param [OpaqueValue] val
@@ -2136,7 +2092,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_insert_value_inst, :LLVMIsAInsertValueInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_landing_pad_inst(val)
   # @param [OpaqueValue] val
@@ -2144,7 +2100,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_landing_pad_inst, :LLVMIsALandingPadInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_aphi_node(val)
   # @param [OpaqueValue] val
@@ -2152,7 +2108,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_aphi_node, :LLVMIsAPHINode, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_select_inst(val)
   # @param [OpaqueValue] val
@@ -2160,7 +2116,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_select_inst, :LLVMIsASelectInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_shuffle_vector_inst(val)
   # @param [OpaqueValue] val
@@ -2168,7 +2124,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_shuffle_vector_inst, :LLVMIsAShuffleVectorInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_store_inst(val)
   # @param [OpaqueValue] val
@@ -2176,7 +2132,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_store_inst, :LLVMIsAStoreInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_terminator_inst(val)
   # @param [OpaqueValue] val
@@ -2184,7 +2140,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_terminator_inst, :LLVMIsATerminatorInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_branch_inst(val)
   # @param [OpaqueValue] val
@@ -2192,7 +2148,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_branch_inst, :LLVMIsABranchInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_indirect_br_inst(val)
   # @param [OpaqueValue] val
@@ -2200,7 +2156,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_indirect_br_inst, :LLVMIsAIndirectBrInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_invoke_inst(val)
   # @param [OpaqueValue] val
@@ -2208,7 +2164,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_invoke_inst, :LLVMIsAInvokeInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_return_inst(val)
   # @param [OpaqueValue] val
@@ -2216,7 +2172,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_return_inst, :LLVMIsAReturnInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_switch_inst(val)
   # @param [OpaqueValue] val
@@ -2224,7 +2180,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_switch_inst, :LLVMIsASwitchInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_unreachable_inst(val)
   # @param [OpaqueValue] val
@@ -2232,7 +2188,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_unreachable_inst, :LLVMIsAUnreachableInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_resume_inst(val)
   # @param [OpaqueValue] val
@@ -2240,7 +2196,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_resume_inst, :LLVMIsAResumeInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_unary_instruction(val)
   # @param [OpaqueValue] val
@@ -2248,7 +2204,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_unary_instruction, :LLVMIsAUnaryInstruction, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_alloca_inst(val)
   # @param [OpaqueValue] val
@@ -2256,7 +2212,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_alloca_inst, :LLVMIsAAllocaInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_cast_inst(val)
   # @param [OpaqueValue] val
@@ -2264,7 +2220,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_cast_inst, :LLVMIsACastInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_addr_space_cast_inst(val)
   # @param [OpaqueValue] val
@@ -2272,7 +2228,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_addr_space_cast_inst, :LLVMIsAAddrSpaceCastInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_bit_cast_inst(val)
   # @param [OpaqueValue] val
@@ -2280,7 +2236,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_bit_cast_inst, :LLVMIsABitCastInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_afp_ext_inst(val)
   # @param [OpaqueValue] val
@@ -2288,7 +2244,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_afp_ext_inst, :LLVMIsAFPExtInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_afp_to_si_inst(val)
   # @param [OpaqueValue] val
@@ -2296,7 +2252,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_afp_to_si_inst, :LLVMIsAFPToSIInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_afp_to_ui_inst(val)
   # @param [OpaqueValue] val
@@ -2304,7 +2260,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_afp_to_ui_inst, :LLVMIsAFPToUIInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_afp_trunc_inst(val)
   # @param [OpaqueValue] val
@@ -2312,7 +2268,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_afp_trunc_inst, :LLVMIsAFPTruncInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_int_to_ptr_inst(val)
   # @param [OpaqueValue] val
@@ -2320,7 +2276,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_int_to_ptr_inst, :LLVMIsAIntToPtrInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_ptr_to_int_inst(val)
   # @param [OpaqueValue] val
@@ -2328,7 +2284,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_ptr_to_int_inst, :LLVMIsAPtrToIntInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_as_ext_inst(val)
   # @param [OpaqueValue] val
@@ -2336,7 +2292,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_as_ext_inst, :LLVMIsASExtInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_asi_to_fp_inst(val)
   # @param [OpaqueValue] val
@@ -2344,7 +2300,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_asi_to_fp_inst, :LLVMIsASIToFPInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_trunc_inst(val)
   # @param [OpaqueValue] val
@@ -2352,7 +2308,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_trunc_inst, :LLVMIsATruncInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_aui_to_fp_inst(val)
   # @param [OpaqueValue] val
@@ -2360,7 +2316,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_aui_to_fp_inst, :LLVMIsAUIToFPInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_az_ext_inst(val)
   # @param [OpaqueValue] val
@@ -2368,7 +2324,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_az_ext_inst, :LLVMIsAZExtInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_extract_value_inst(val)
   # @param [OpaqueValue] val
@@ -2376,7 +2332,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_extract_value_inst, :LLVMIsAExtractValueInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_a_load_inst(val)
   # @param [OpaqueValue] val
@@ -2384,7 +2340,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_a_load_inst, :LLVMIsALoadInst, [OpaqueValue], OpaqueValue
 
-  # @}
+  # (Not documented)
   #
   # @method is_ava_arg_inst(val)
   # @param [OpaqueValue] val
@@ -2392,14 +2348,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_ava_arg_inst, :LLVMIsAVAArgInst, [OpaqueValue], OpaqueValue
 
-  # Obtain the first use of a value.
-  #
-  # Uses are obtained in an iterator fashion. First, call this function
-  # to obtain a reference to the first use. Then, call LLVMGetNextUse()
-  # on that instance and all subsequently obtained instances until
-  # LLVMGetNextUse() returns NULL.
-  #
-  # @see llvm::Value::use_begin()
+  # (Not documented)
   #
   # @method get_first_use(val)
   # @param [OpaqueValue] val
@@ -2407,10 +2356,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_first_use, :LLVMGetFirstUse, [OpaqueValue], OpaqueUse
 
-  # Obtain the next use of a value.
-  #
-  # This effectively advances the iterator. It returns NULL if you are on
-  # the final use and no more are available.
+  # (Not documented)
   #
   # @method get_next_use(u)
   # @param [OpaqueUse] u
@@ -2418,11 +2364,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_next_use, :LLVMGetNextUse, [OpaqueUse], OpaqueUse
 
-  # Obtain the user value for a user.
-  #
-  # The returned value corresponds to a llvm::User type.
-  #
-  # @see llvm::Use::getUser()
+  # (Not documented)
   #
   # @method get_user(u)
   # @param [OpaqueUse] u
@@ -2430,9 +2372,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_user, :LLVMGetUser, [OpaqueUse], OpaqueValue
 
-  # Obtain the value this use corresponds to.
-  #
-  # @see llvm::Use::get().
+  # (Not documented)
   #
   # @method get_used_value(u)
   # @param [OpaqueUse] u
@@ -2440,9 +2380,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_used_value, :LLVMGetUsedValue, [OpaqueUse], OpaqueValue
 
-  # Obtain an operand at a specific index in a llvm::User value.
-  #
-  # @see llvm::User::getOperand()
+  # (Not documented)
   #
   # @method get_operand(val, index)
   # @param [OpaqueValue] val
@@ -2451,9 +2389,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_operand, :LLVMGetOperand, [OpaqueValue, :uint], OpaqueValue
 
-  # Set an operand at a specific index in a llvm::User value.
-  #
-  # @see llvm::User::setOperand()
+  # (Not documented)
   #
   # @method set_operand(user, index, val)
   # @param [OpaqueValue] user
@@ -2463,9 +2399,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_operand, :LLVMSetOperand, [OpaqueValue, :uint, OpaqueValue], :void
 
-  # Obtain the number of operands in a llvm::User value.
-  #
-  # @see llvm::User::getNumOperands()
+  # (Not documented)
   #
   # @method get_num_operands(val)
   # @param [OpaqueValue] val
@@ -2473,9 +2407,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_num_operands, :LLVMGetNumOperands, [OpaqueValue], :int
 
-  # Obtain a constant value referring to the null instance of a type.
-  #
-  # @see llvm::Constant::getNullValue()
+  # (Not documented)
   #
   # @method const_null(ty)
   # @param [OpaqueType] ty
@@ -2483,12 +2415,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_null, :LLVMConstNull, [OpaqueType], OpaqueValue
 
-  # Obtain a constant value referring to the instance of a type
-  # consisting of all ones.
-  #
-  # This is only valid for integer types.
-  #
-  # @see llvm::Constant::getAllOnesValue()
+  # (Not documented)
   #
   # @method const_all_ones(ty)
   # @param [OpaqueType] ty
@@ -2496,9 +2423,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_all_ones, :LLVMConstAllOnes, [OpaqueType], OpaqueValue
 
-  # Obtain a constant value referring to an undefined value of a type.
-  #
-  # @see llvm::UndefValue::get()
+  # (Not documented)
   #
   # @method get_undef(ty)
   # @param [OpaqueType] ty
@@ -2506,9 +2431,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_undef, :LLVMGetUndef, [OpaqueType], OpaqueValue
 
-  # Determine whether a value instance is null.
-  #
-  # @see llvm::Constant::isNullValue()
+  # (Not documented)
   #
   # @method is_null(val)
   # @param [OpaqueValue] val
@@ -2516,8 +2439,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_null, :LLVMIsNull, [OpaqueValue], :int
 
-  # Obtain a constant that is a constant pointer pointing to NULL for a
-  # specified type.
+  # (Not documented)
   #
   # @method const_pointer_null(ty)
   # @param [OpaqueType] ty
@@ -2525,15 +2447,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_pointer_null, :LLVMConstPointerNull, [OpaqueType], OpaqueValue
 
-  # Obtain a constant value for an integer type.
-  #
-  # The returned value corresponds to a llvm::ConstantInt.
-  #
-  # @see llvm::ConstantInt::get()
-  #
-  # @param IntTy Integer type to obtain value of.
-  # @param N The value the returned instance should refer to.
-  # @param SignExtend Whether to sign extend the produced value.
+  # (Not documented)
   #
   # @method const_int(int_ty, n, sign_extend)
   # @param [OpaqueType] int_ty
@@ -2543,25 +2457,17 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_int, :LLVMConstInt, [OpaqueType, :ulong_long, :int], OpaqueValue
 
-  # Obtain a constant value for an integer of arbitrary precision.
-  #
-  # @see llvm::ConstantInt::get()
+  # (Not documented)
   #
   # @method const_int_of_arbitrary_precision(int_ty, num_words, words)
   # @param [OpaqueType] int_ty
   # @param [Integer] num_words
-  # @param [unexposed] words
+  # @param [FFI::Pointer(*U_long)] words
   # @return [OpaqueValue]
   # @scope class
-  attach_function :const_int_of_arbitrary_precision, :LLVMConstIntOfArbitraryPrecision, [OpaqueType, :uint, :char], OpaqueValue
+  attach_function :const_int_of_arbitrary_precision, :LLVMConstIntOfArbitraryPrecision, [OpaqueType, :uint, :pointer], OpaqueValue
 
-  # Obtain a constant value for an integer parsed from a string.
-  #
-  # A similar API, LLVMConstIntOfStringAndSize is also available. If the
-  # string's length is available, it is preferred to call that function
-  # instead.
-  #
-  # @see llvm::ConstantInt::get()
+  # (Not documented)
   #
   # @method const_int_of_string(int_ty, text, radix)
   # @param [OpaqueType] int_ty
@@ -2571,10 +2477,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_int_of_string, :LLVMConstIntOfString, [OpaqueType, :string, :uchar], OpaqueValue
 
-  # Obtain a constant value for an integer parsed from a string with
-  # specified length.
-  #
-  # @see llvm::ConstantInt::get()
+  # (Not documented)
   #
   # @method const_int_of_string_and_size(int_ty, text, s_len, radix)
   # @param [OpaqueType] int_ty
@@ -2585,7 +2488,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_int_of_string_and_size, :LLVMConstIntOfStringAndSize, [OpaqueType, :string, :uint, :uchar], OpaqueValue
 
-  # Obtain a constant value referring to a double floating point value.
+  # (Not documented)
   #
   # @method const_real(real_ty, n)
   # @param [OpaqueType] real_ty
@@ -2594,10 +2497,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_real, :LLVMConstReal, [OpaqueType, :double], OpaqueValue
 
-  # Obtain a constant for a floating point value parsed from a string.
-  #
-  # A similar API, LLVMConstRealOfStringAndSize is also available. It
-  # should be used if the input string's length is known.
+  # (Not documented)
   #
   # @method const_real_of_string(real_ty, text)
   # @param [OpaqueType] real_ty
@@ -2606,7 +2506,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_real_of_string, :LLVMConstRealOfString, [OpaqueType, :string], OpaqueValue
 
-  # Obtain a constant for a floating point value parsed from a string.
+  # (Not documented)
   #
   # @method const_real_of_string_and_size(real_ty, text, s_len)
   # @param [OpaqueType] real_ty
@@ -2616,9 +2516,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_real_of_string_and_size, :LLVMConstRealOfStringAndSize, [OpaqueType, :string, :uint], OpaqueValue
 
-  # Obtain the zero extended value for an integer constant value.
-  #
-  # @see llvm::ConstantInt::getZExtValue()
+  # (Not documented)
   #
   # @method const_int_get_z_ext_value(constant_val)
   # @param [OpaqueValue] constant_val
@@ -2626,9 +2524,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_int_get_z_ext_value, :LLVMConstIntGetZExtValue, [OpaqueValue], :ulong_long
 
-  # Obtain the sign extended value for an integer constant value.
-  #
-  # @see llvm::ConstantInt::getSExtValue()
+  # (Not documented)
   #
   # @method const_int_get_s_ext_value(constant_val)
   # @param [OpaqueValue] constant_val
@@ -2636,9 +2532,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_int_get_s_ext_value, :LLVMConstIntGetSExtValue, [OpaqueValue], :long_long
 
-  # Create a ConstantDataSequential and initialize it with a string.
-  #
-  # @see llvm::ConstantDataArray::getString()
+  # (Not documented)
   #
   # @method const_string_in_context(c, str, length, dont_null_terminate)
   # @param [OpaqueContext] c
@@ -2649,13 +2543,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_string_in_context, :LLVMConstStringInContext, [OpaqueContext, :string, :uint, :int], OpaqueValue
 
-  # Create a ConstantDataSequential with string content in the global context.
-  #
-  # This is the same as LLVMConstStringInContext except it operates on the
-  # global context.
-  #
-  # @see LLVMConstStringInContext()
-  # @see llvm::ConstantDataArray::getString()
+  # (Not documented)
   #
   # @method const_string(str, length, dont_null_terminate)
   # @param [String] str
@@ -2665,9 +2553,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_string, :LLVMConstString, [:string, :uint, :int], OpaqueValue
 
-  # Create an anonymous ConstantStruct with the specified values.
-  #
-  # @see llvm::ConstantStruct::getAnon()
+  # (Not documented)
   #
   # @method const_struct_in_context(c, constant_vals, count, packed)
   # @param [OpaqueContext] c
@@ -2678,12 +2564,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_struct_in_context, :LLVMConstStructInContext, [OpaqueContext, :pointer, :uint, :int], OpaqueValue
 
-  # Create a ConstantStruct in the global Context.
-  #
-  # This is the same as LLVMConstStructInContext except it operates on the
-  # global Context.
-  #
-  # @see LLVMConstStructInContext()
+  # (Not documented)
   #
   # @method const_struct(constant_vals, count, packed)
   # @param [FFI::Pointer(*ValueRef)] constant_vals
@@ -2693,9 +2574,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_struct, :LLVMConstStruct, [:pointer, :uint, :int], OpaqueValue
 
-  # Create a ConstantArray from values.
-  #
-  # @see llvm::ConstantArray::get()
+  # (Not documented)
   #
   # @method const_array(element_ty, constant_vals, length)
   # @param [OpaqueType] element_ty
@@ -2705,9 +2584,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_array, :LLVMConstArray, [OpaqueType, :pointer, :uint], OpaqueValue
 
-  # Create a non-anonymous ConstantStruct from values.
-  #
-  # @see llvm::ConstantStruct::get()
+  # (Not documented)
   #
   # @method const_named_struct(struct_ty, constant_vals, count)
   # @param [OpaqueType] struct_ty
@@ -2717,9 +2594,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_named_struct, :LLVMConstNamedStruct, [OpaqueType, :pointer, :uint], OpaqueValue
 
-  # Create a ConstantVector from values.
-  #
-  # @see llvm::ConstantVector::get()
+  # (Not documented)
   #
   # @method const_vector(scalar_constant_vals, size)
   # @param [FFI::Pointer(*ValueRef)] scalar_constant_vals
@@ -2728,13 +2603,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :const_vector, :LLVMConstVector, [:pointer, :uint], OpaqueValue
 
-  # @defgroup LLVMCCoreValueConstantExpressions Constant Expressions
-  #
-  # Functions in this group correspond to APIs on llvm::ConstantExpr.
-  #
-  # @see llvm::ConstantExpr.
-  #
-  # @{
+  # (Not documented)
   #
   # @method get_const_opcode(constant_val)
   # @param [OpaqueValue] constant_val
@@ -3316,14 +3185,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :block_address, :LLVMBlockAddress, [OpaqueValue, OpaqueBasicBlock], OpaqueValue
 
-  # @defgroup LLVMCCoreValueConstantGlobals Global Values
-  #
-  # This group contains functions that operate on global values. Functions in
-  # this group relate to functions in the llvm::GlobalValue class tree.
-  #
-  # @see llvm::GlobalValue
-  #
-  # @{
+  # (Not documented)
   #
   # @method get_global_parent(global)
   # @param [OpaqueValue] global
@@ -3390,10 +3252,41 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_visibility, :LLVMSetVisibility, [OpaqueValue, :visibility], :void
 
-  # Obtain the preferred alignment of the value.
-  # @see llvm::LoadInst::getAlignment()
-  # @see llvm::StoreInst::getAlignment()
-  # @see llvm::GlobalValue::getAlignment()
+  # (Not documented)
+  #
+  # @method get_dll_storage_class(global)
+  # @param [OpaqueValue] global
+  # @return [Symbol from _enum_dll_storage_class_]
+  # @scope class
+  attach_function :get_dll_storage_class, :LLVMGetDLLStorageClass, [OpaqueValue], :dll_storage_class
+
+  # (Not documented)
+  #
+  # @method set_dll_storage_class(global, class_)
+  # @param [OpaqueValue] global
+  # @param [Symbol from _enum_dll_storage_class_] class_
+  # @return [nil]
+  # @scope class
+  attach_function :set_dll_storage_class, :LLVMSetDLLStorageClass, [OpaqueValue, :dll_storage_class], :void
+
+  # (Not documented)
+  #
+  # @method has_unnamed_addr(global)
+  # @param [OpaqueValue] global
+  # @return [Integer]
+  # @scope class
+  attach_function :has_unnamed_addr, :LLVMHasUnnamedAddr, [OpaqueValue], :int
+
+  # (Not documented)
+  #
+  # @method set_unnamed_addr(global, has_unnamed_addr)
+  # @param [OpaqueValue] global
+  # @param [Integer] has_unnamed_addr
+  # @return [nil]
+  # @scope class
+  attach_function :set_unnamed_addr, :LLVMSetUnnamedAddr, [OpaqueValue, :int], :void
+
+  # (Not documented)
   #
   # @method get_alignment(v)
   # @param [OpaqueValue] v
@@ -3401,10 +3294,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_alignment, :LLVMGetAlignment, [OpaqueValue], :uint
 
-  # Set the preferred alignment of the value.
-  # @see llvm::LoadInst::setAlignment()
-  # @see llvm::StoreInst::setAlignment()
-  # @see llvm::GlobalValue::setAlignment()
+  # (Not documented)
   #
   # @method set_alignment(v, bytes)
   # @param [OpaqueValue] v
@@ -3413,13 +3303,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_alignment, :LLVMSetAlignment, [OpaqueValue, :uint], :void
 
-  # @defgroup LLVMCoreValueConstantGlobalVariable Global Variables
-  #
-  # This group contains functions that operate on global variable values.
-  #
-  # @see llvm::GlobalVariable
-  #
-  # @{
+  # (Not documented)
   #
   # @method add_global(m, ty, name)
   # @param [OpaqueModule] m
@@ -3574,13 +3458,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_externally_initialized, :LLVMSetExternallyInitialized, [OpaqueValue, :int], :void
 
-  # @defgroup LLVMCoreValueConstantGlobalAlias Global Aliases
-  #
-  # This group contains function that operate on global alias values.
-  #
-  # @see llvm::GlobalAlias
-  #
-  # @{
+  # (Not documented)
   #
   # @method add_alias(m, ty, aliasee, name)
   # @param [OpaqueModule] m
@@ -3591,9 +3469,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_alias, :LLVMAddAlias, [OpaqueModule, OpaqueType, OpaqueValue, :string], OpaqueValue
 
-  # Remove a function from its containing module and deletes it.
-  #
-  # @see llvm::Function::eraseFromParent()
+  # (Not documented)
   #
   # @method delete_function(fn)
   # @param [OpaqueValue] fn
@@ -3601,9 +3477,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :delete_function, :LLVMDeleteFunction, [OpaqueValue], :void
 
-  # Obtain the ID number from a function instance.
-  #
-  # @see llvm::Function::getIntrinsicID()
+  # (Not documented)
   #
   # @method get_intrinsic_id(fn)
   # @param [OpaqueValue] fn
@@ -3611,11 +3485,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_intrinsic_id, :LLVMGetIntrinsicID, [OpaqueValue], :uint
 
-  # Obtain the calling function of a function.
-  #
-  # The returned value corresponds to the LLVMCallConv enumeration.
-  #
-  # @see llvm::Function::getCallingConv()
+  # (Not documented)
   #
   # @method get_function_call_conv(fn)
   # @param [OpaqueValue] fn
@@ -3623,12 +3493,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_function_call_conv, :LLVMGetFunctionCallConv, [OpaqueValue], :uint
 
-  # Set the calling convention of a function.
-  #
-  # @see llvm::Function::setCallingConv()
-  #
-  # @param Fn Function to operate on
-  # @param CC LLVMCallConv to set calling convention to
+  # (Not documented)
   #
   # @method set_function_call_conv(fn, cc)
   # @param [OpaqueValue] fn
@@ -3637,10 +3502,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_function_call_conv, :LLVMSetFunctionCallConv, [OpaqueValue, :uint], :void
 
-  # Obtain the name of the garbage collector to use during code
-  # generation.
-  #
-  # @see llvm::Function::getGC()
+  # (Not documented)
   #
   # @method get_gc(fn)
   # @param [OpaqueValue] fn
@@ -3648,9 +3510,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_gc, :LLVMGetGC, [OpaqueValue], :string
 
-  # Define the garbage collector to use during code generation.
-  #
-  # @see llvm::Function::setGC()
+  # (Not documented)
   #
   # @method set_gc(fn, name)
   # @param [OpaqueValue] fn
@@ -3659,9 +3519,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_gc, :LLVMSetGC, [OpaqueValue, :string], :void
 
-  # Add an attribute to a function.
-  #
-  # @see llvm::Function::addAttribute()
+  # (Not documented)
   #
   # @method add_function_attr(fn, pa)
   # @param [OpaqueValue] fn
@@ -3670,8 +3528,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_function_attr, :LLVMAddFunctionAttr, [OpaqueValue, :attribute], :void
 
-  # Add a target-dependent attribute to a fuction
-  # @see llvm::AttrBuilder::addAttribute()
+  # (Not documented)
   #
   # @method add_target_dependent_function_attr(fn, a, v)
   # @param [OpaqueValue] fn
@@ -3681,9 +3538,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_target_dependent_function_attr, :LLVMAddTargetDependentFunctionAttr, [OpaqueValue, :string, :string], :void
 
-  # Obtain an attribute from a function.
-  #
-  # @see llvm::Function::getAttributes()
+  # (Not documented)
   #
   # @method get_function_attr(fn)
   # @param [OpaqueValue] fn
@@ -3691,7 +3546,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_function_attr, :LLVMGetFunctionAttr, [OpaqueValue], :attribute
 
-  # Remove an attribute from a function.
+  # (Not documented)
   #
   # @method remove_function_attr(fn, pa)
   # @param [OpaqueValue] fn
@@ -3700,9 +3555,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :remove_function_attr, :LLVMRemoveFunctionAttr, [OpaqueValue, :attribute], :void
 
-  # Obtain the number of parameters in a function.
-  #
-  # @see llvm::Function::arg_size()
+  # (Not documented)
   #
   # @method count_params(fn)
   # @param [OpaqueValue] fn
@@ -3710,15 +3563,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :count_params, :LLVMCountParams, [OpaqueValue], :uint
 
-  # Obtain the parameters in a function.
-  #
-  # The takes a pointer to a pre-allocated array of LLVMValueRef that is
-  # at least LLVMCountParams() long. This array will be filled with
-  # LLVMValueRef instances which correspond to the parameters the
-  # function receives. Each LLVMValueRef corresponds to a llvm::Argument
-  # instance.
-  #
-  # @see llvm::Function::arg_begin()
+  # (Not documented)
   #
   # @method get_params(fn, params)
   # @param [OpaqueValue] fn
@@ -3727,11 +3572,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_params, :LLVMGetParams, [OpaqueValue, :pointer], :void
 
-  # Obtain the parameter at the specified index.
-  #
-  # Parameters are indexed from 0.
-  #
-  # @see llvm::Function::arg_begin()
+  # (Not documented)
   #
   # @method get_param(fn, index)
   # @param [OpaqueValue] fn
@@ -3740,13 +3581,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_param, :LLVMGetParam, [OpaqueValue, :uint], OpaqueValue
 
-  # Obtain the function to which this argument belongs.
-  #
-  # Unlike other functions in this group, this one takes an LLVMValueRef
-  # that corresponds to a llvm::Attribute.
-  #
-  # The returned LLVMValueRef is the llvm::Function to which this
-  # argument belongs.
+  # (Not documented)
   #
   # @method get_param_parent(inst)
   # @param [OpaqueValue] inst
@@ -3754,9 +3589,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_param_parent, :LLVMGetParamParent, [OpaqueValue], OpaqueValue
 
-  # Obtain the first parameter to a function.
-  #
-  # @see llvm::Function::arg_begin()
+  # (Not documented)
   #
   # @method get_first_param(fn)
   # @param [OpaqueValue] fn
@@ -3764,9 +3597,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_first_param, :LLVMGetFirstParam, [OpaqueValue], OpaqueValue
 
-  # Obtain the last parameter to a function.
-  #
-  # @see llvm::Function::arg_end()
+  # (Not documented)
   #
   # @method get_last_param(fn)
   # @param [OpaqueValue] fn
@@ -3774,11 +3605,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_last_param, :LLVMGetLastParam, [OpaqueValue], OpaqueValue
 
-  # Obtain the next parameter to a function.
-  #
-  # This takes an LLVMValueRef obtained from LLVMGetFirstParam() (which is
-  # actually a wrapped iterator) and obtains the next parameter from the
-  # underlying iterator.
+  # (Not documented)
   #
   # @method get_next_param(arg)
   # @param [OpaqueValue] arg
@@ -3786,9 +3613,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_next_param, :LLVMGetNextParam, [OpaqueValue], OpaqueValue
 
-  # Obtain the previous parameter to a function.
-  #
-  # This is the opposite of LLVMGetNextParam().
+  # (Not documented)
   #
   # @method get_previous_param(arg)
   # @param [OpaqueValue] arg
@@ -3796,9 +3621,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_previous_param, :LLVMGetPreviousParam, [OpaqueValue], OpaqueValue
 
-  # Add an attribute to a function argument.
-  #
-  # @see llvm::Argument::addAttr()
+  # (Not documented)
   #
   # @method add_attribute(arg, pa)
   # @param [OpaqueValue] arg
@@ -3807,9 +3630,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_attribute, :LLVMAddAttribute, [OpaqueValue, :attribute], :void
 
-  # Remove an attribute from a function argument.
-  #
-  # @see llvm::Argument::removeAttr()
+  # (Not documented)
   #
   # @method remove_attribute(arg, pa)
   # @param [OpaqueValue] arg
@@ -3818,7 +3639,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :remove_attribute, :LLVMRemoveAttribute, [OpaqueValue, :attribute], :void
 
-  # Get an attribute from a function argument.
+  # (Not documented)
   #
   # @method get_attribute(arg)
   # @param [OpaqueValue] arg
@@ -3826,10 +3647,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_attribute, :LLVMGetAttribute, [OpaqueValue], :attribute
 
-  # Set the alignment for a function parameter.
-  #
-  # @see llvm::Argument::addAttr()
-  # @see llvm::AttrBuilder::addAlignmentAttr()
+  # (Not documented)
   #
   # @method set_param_alignment(arg, align)
   # @param [OpaqueValue] arg
@@ -3838,13 +3656,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_param_alignment, :LLVMSetParamAlignment, [OpaqueValue, :uint], :void
 
-  # Obtain a MDString value from a context.
-  #
-  # The returned instance corresponds to the llvm::MDString class.
-  #
-  # The instance is specified by string data of a specified length. The
-  # string content is copied, so the backing memory can be freed after
-  # this function returns.
+  # (Not documented)
   #
   # @method md_string_in_context(c, str, s_len)
   # @param [OpaqueContext] c
@@ -3854,7 +3666,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :md_string_in_context, :LLVMMDStringInContext, [OpaqueContext, :string, :uint], OpaqueValue
 
-  # Obtain a MDString value from the global context.
+  # (Not documented)
   #
   # @method md_string(str, s_len)
   # @param [String] str
@@ -3863,9 +3675,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :md_string, :LLVMMDString, [:string, :uint], OpaqueValue
 
-  # Obtain a MDNode value from a context.
-  #
-  # The returned value corresponds to the llvm::MDNode class.
+  # (Not documented)
   #
   # @method md_node_in_context(c, vals, count)
   # @param [OpaqueContext] c
@@ -3875,7 +3685,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :md_node_in_context, :LLVMMDNodeInContext, [OpaqueContext, :pointer, :uint], OpaqueValue
 
-  # Obtain a MDNode value from the global context.
+  # (Not documented)
   #
   # @method md_node(vals, count)
   # @param [FFI::Pointer(*ValueRef)] vals
@@ -3884,11 +3694,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :md_node, :LLVMMDNode, [:pointer, :uint], OpaqueValue
 
-  # Obtain the underlying string from a MDString value.
-  #
-  # @param V Instance to obtain string from.
-  # @param Len Memory address which will hold length of returned string.
-  # @return String data in MDString.
+  # (Not documented)
   #
   # @method get_md_string(v, len)
   # @param [OpaqueValue] v
@@ -3897,10 +3703,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_md_string, :LLVMGetMDString, [OpaqueValue, :pointer], :string
 
-  # Obtain the number of operands from an MDNode value.
-  #
-  # @param V MDNode to get number of operands from.
-  # @return Number of operands of the MDNode.
+  # (Not documented)
   #
   # @method get_md_node_num_operands(v)
   # @param [OpaqueValue] v
@@ -3908,15 +3711,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_md_node_num_operands, :LLVMGetMDNodeNumOperands, [OpaqueValue], :uint
 
-  # Obtain the given MDNode's operands.
-  #
-  # The passed LLVMValueRef pointer should point to enough memory to hold all of
-  # the operands of the given MDNode (see LLVMGetMDNodeNumOperands) as
-  # LLVMValueRefs. This memory will be populated with the LLVMValueRefs of the
-  # MDNode's operands.
-  #
-  # @param V MDNode to get the operands from.
-  # @param Dest Destination array for operands.
+  # (Not documented)
   #
   # @method get_md_node_operands(v, dest)
   # @param [OpaqueValue] v
@@ -3925,7 +3720,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_md_node_operands, :LLVMGetMDNodeOperands, [OpaqueValue, :pointer], :void
 
-  # Convert a basic block instance to a value type.
+  # (Not documented)
   #
   # @method basic_block_as_value(bb)
   # @param [OpaqueBasicBlock] bb
@@ -3933,7 +3728,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :basic_block_as_value, :LLVMBasicBlockAsValue, [OpaqueBasicBlock], OpaqueValue
 
-  # Determine whether an LLVMValueRef is itself a basic block.
+  # (Not documented)
   #
   # @method value_is_basic_block(val)
   # @param [OpaqueValue] val
@@ -3941,7 +3736,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :value_is_basic_block, :LLVMValueIsBasicBlock, [OpaqueValue], :int
 
-  # Convert an LLVMValueRef to an LLVMBasicBlockRef instance.
+  # (Not documented)
   #
   # @method value_as_basic_block(val)
   # @param [OpaqueValue] val
@@ -3949,9 +3744,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :value_as_basic_block, :LLVMValueAsBasicBlock, [OpaqueValue], OpaqueBasicBlock
 
-  # Obtain the function to which a basic block belongs.
-  #
-  # @see llvm::BasicBlock::getParent()
+  # (Not documented)
   #
   # @method get_basic_block_parent(bb)
   # @param [OpaqueBasicBlock] bb
@@ -3959,14 +3752,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_basic_block_parent, :LLVMGetBasicBlockParent, [OpaqueBasicBlock], OpaqueValue
 
-  # Obtain the terminator instruction for a basic block.
-  #
-  # If the basic block does not have a terminator (it is not well-formed
-  # if it doesn't), then NULL is returned.
-  #
-  # The returned LLVMValueRef corresponds to a llvm::TerminatorInst.
-  #
-  # @see llvm::BasicBlock::getTerminator()
+  # (Not documented)
   #
   # @method get_basic_block_terminator(bb)
   # @param [OpaqueBasicBlock] bb
@@ -3974,9 +3760,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_basic_block_terminator, :LLVMGetBasicBlockTerminator, [OpaqueBasicBlock], OpaqueValue
 
-  # Obtain the number of basic blocks in a function.
-  #
-  # @param Fn Function value to operate on.
+  # (Not documented)
   #
   # @method count_basic_blocks(fn)
   # @param [OpaqueValue] fn
@@ -3984,12 +3768,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :count_basic_blocks, :LLVMCountBasicBlocks, [OpaqueValue], :uint
 
-  # Obtain all of the basic blocks in a function.
-  #
-  # This operates on a function value. The BasicBlocks parameter is a
-  # pointer to a pre-allocated array of LLVMBasicBlockRef of at least
-  # LLVMCountBasicBlocks() in length. This array is populated with
-  # LLVMBasicBlockRef instances.
+  # (Not documented)
   #
   # @method get_basic_blocks(fn, basic_blocks)
   # @param [OpaqueValue] fn
@@ -3998,12 +3777,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_basic_blocks, :LLVMGetBasicBlocks, [OpaqueValue, :pointer], :void
 
-  # Obtain the first basic block in a function.
-  #
-  # The returned basic block can be used as an iterator. You will likely
-  # eventually call into LLVMGetNextBasicBlock() with it.
-  #
-  # @see llvm::Function::begin()
+  # (Not documented)
   #
   # @method get_first_basic_block(fn)
   # @param [OpaqueValue] fn
@@ -4011,9 +3785,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_first_basic_block, :LLVMGetFirstBasicBlock, [OpaqueValue], OpaqueBasicBlock
 
-  # Obtain the last basic block in a function.
-  #
-  # @see llvm::Function::end()
+  # (Not documented)
   #
   # @method get_last_basic_block(fn)
   # @param [OpaqueValue] fn
@@ -4021,7 +3793,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_last_basic_block, :LLVMGetLastBasicBlock, [OpaqueValue], OpaqueBasicBlock
 
-  # Advance a basic block iterator.
+  # (Not documented)
   #
   # @method get_next_basic_block(bb)
   # @param [OpaqueBasicBlock] bb
@@ -4029,7 +3801,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_next_basic_block, :LLVMGetNextBasicBlock, [OpaqueBasicBlock], OpaqueBasicBlock
 
-  # Go backwards in a basic block iterator.
+  # (Not documented)
   #
   # @method get_previous_basic_block(bb)
   # @param [OpaqueBasicBlock] bb
@@ -4037,10 +3809,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_previous_basic_block, :LLVMGetPreviousBasicBlock, [OpaqueBasicBlock], OpaqueBasicBlock
 
-  # Obtain the basic block that corresponds to the entry point of a
-  # function.
-  #
-  # @see llvm::Function::getEntryBlock()
+  # (Not documented)
   #
   # @method get_entry_basic_block(fn)
   # @param [OpaqueValue] fn
@@ -4048,9 +3817,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_entry_basic_block, :LLVMGetEntryBasicBlock, [OpaqueValue], OpaqueBasicBlock
 
-  # Append a basic block to the end of a function.
-  #
-  # @see llvm::BasicBlock::Create()
+  # (Not documented)
   #
   # @method append_basic_block_in_context(c, fn, name)
   # @param [OpaqueContext] c
@@ -4060,10 +3827,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :append_basic_block_in_context, :LLVMAppendBasicBlockInContext, [OpaqueContext, OpaqueValue, :string], OpaqueBasicBlock
 
-  # Append a basic block to the end of a function using the global
-  # context.
-  #
-  # @see llvm::BasicBlock::Create()
+  # (Not documented)
   #
   # @method append_basic_block(fn, name)
   # @param [OpaqueValue] fn
@@ -4072,12 +3836,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :append_basic_block, :LLVMAppendBasicBlock, [OpaqueValue, :string], OpaqueBasicBlock
 
-  # Insert a basic block in a function before another basic block.
-  #
-  # The function to add to is determined by the function of the
-  # passed basic block.
-  #
-  # @see llvm::BasicBlock::Create()
+  # (Not documented)
   #
   # @method insert_basic_block_in_context(c, bb, name)
   # @param [OpaqueContext] c
@@ -4087,9 +3846,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :insert_basic_block_in_context, :LLVMInsertBasicBlockInContext, [OpaqueContext, OpaqueBasicBlock, :string], OpaqueBasicBlock
 
-  # Insert a basic block in a function using the global context.
-  #
-  # @see llvm::BasicBlock::Create()
+  # (Not documented)
   #
   # @method insert_basic_block(insert_before_bb, name)
   # @param [OpaqueBasicBlock] insert_before_bb
@@ -4098,12 +3855,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :insert_basic_block, :LLVMInsertBasicBlock, [OpaqueBasicBlock, :string], OpaqueBasicBlock
 
-  # Remove a basic block from a function and delete it.
-  #
-  # This deletes the basic block from its containing function and deletes
-  # the basic block itself.
-  #
-  # @see llvm::BasicBlock::eraseFromParent()
+  # (Not documented)
   #
   # @method delete_basic_block(bb)
   # @param [OpaqueBasicBlock] bb
@@ -4111,12 +3863,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :delete_basic_block, :LLVMDeleteBasicBlock, [OpaqueBasicBlock], :void
 
-  # Remove a basic block from a function.
-  #
-  # This deletes the basic block from its containing function but keep
-  # the basic block alive.
-  #
-  # @see llvm::BasicBlock::removeFromParent()
+  # (Not documented)
   #
   # @method remove_basic_block_from_parent(bb)
   # @param [OpaqueBasicBlock] bb
@@ -4124,9 +3871,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :remove_basic_block_from_parent, :LLVMRemoveBasicBlockFromParent, [OpaqueBasicBlock], :void
 
-  # Move a basic block to before another one.
-  #
-  # @see llvm::BasicBlock::moveBefore()
+  # (Not documented)
   #
   # @method move_basic_block_before(bb, move_pos)
   # @param [OpaqueBasicBlock] bb
@@ -4135,9 +3880,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :move_basic_block_before, :LLVMMoveBasicBlockBefore, [OpaqueBasicBlock, OpaqueBasicBlock], :void
 
-  # Move a basic block to after another one.
-  #
-  # @see llvm::BasicBlock::moveAfter()
+  # (Not documented)
   #
   # @method move_basic_block_after(bb, move_pos)
   # @param [OpaqueBasicBlock] bb
@@ -4146,10 +3889,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :move_basic_block_after, :LLVMMoveBasicBlockAfter, [OpaqueBasicBlock, OpaqueBasicBlock], :void
 
-  # Obtain the first instruction in a basic block.
-  #
-  # The returned LLVMValueRef corresponds to a llvm::Instruction
-  # instance.
+  # (Not documented)
   #
   # @method get_first_instruction(bb)
   # @param [OpaqueBasicBlock] bb
@@ -4157,9 +3897,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_first_instruction, :LLVMGetFirstInstruction, [OpaqueBasicBlock], OpaqueValue
 
-  # Obtain the last instruction in a basic block.
-  #
-  # The returned LLVMValueRef corresponds to an LLVM:Instruction.
+  # (Not documented)
   #
   # @method get_last_instruction(bb)
   # @param [OpaqueBasicBlock] bb
@@ -4167,7 +3905,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_last_instruction, :LLVMGetLastInstruction, [OpaqueBasicBlock], OpaqueValue
 
-  # Determine whether an instruction has any metadata attached.
+  # (Not documented)
   #
   # @method has_metadata(val)
   # @param [OpaqueValue] val
@@ -4175,7 +3913,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :has_metadata, :LLVMHasMetadata, [OpaqueValue], :int
 
-  # Return metadata associated with an instruction value.
+  # (Not documented)
   #
   # @method get_metadata(val, kind_id)
   # @param [OpaqueValue] val
@@ -4184,7 +3922,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_metadata, :LLVMGetMetadata, [OpaqueValue, :uint], OpaqueValue
 
-  # Set metadata associated with an instruction value.
+  # (Not documented)
   #
   # @method set_metadata(val, kind_id, node)
   # @param [OpaqueValue] val
@@ -4194,9 +3932,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_metadata, :LLVMSetMetadata, [OpaqueValue, :uint, OpaqueValue], :void
 
-  # Obtain the basic block to which an instruction belongs.
-  #
-  # @see llvm::Instruction::getParent()
+  # (Not documented)
   #
   # @method get_instruction_parent(inst)
   # @param [OpaqueValue] inst
@@ -4204,12 +3940,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_instruction_parent, :LLVMGetInstructionParent, [OpaqueValue], OpaqueBasicBlock
 
-  # Obtain the instruction that occurs after the one specified.
-  #
-  # The next instruction will be from the same basic block.
-  #
-  # If this is the last instruction in a basic block, NULL will be
-  # returned.
+  # (Not documented)
   #
   # @method get_next_instruction(inst)
   # @param [OpaqueValue] inst
@@ -4217,10 +3948,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_next_instruction, :LLVMGetNextInstruction, [OpaqueValue], OpaqueValue
 
-  # Obtain the instruction that occurred before this one.
-  #
-  # If the instruction is the first instruction in a basic block, NULL
-  # will be returned.
+  # (Not documented)
   #
   # @method get_previous_instruction(inst)
   # @param [OpaqueValue] inst
@@ -4228,12 +3956,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_previous_instruction, :LLVMGetPreviousInstruction, [OpaqueValue], OpaqueValue
 
-  # Remove and delete an instruction.
-  #
-  # The instruction specified is removed from its containing building
-  # block and then deleted.
-  #
-  # @see llvm::Instruction::eraseFromParent()
+  # (Not documented)
   #
   # @method instruction_erase_from_parent(inst)
   # @param [OpaqueValue] inst
@@ -4241,9 +3964,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :instruction_erase_from_parent, :LLVMInstructionEraseFromParent, [OpaqueValue], :void
 
-  # Obtain the code opcode for an individual instruction.
-  #
-  # @see llvm::Instruction::getOpCode()
+  # (Not documented)
   #
   # @method get_instruction_opcode(inst)
   # @param [OpaqueValue] inst
@@ -4251,12 +3972,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_instruction_opcode, :LLVMGetInstructionOpcode, [OpaqueValue], :opcode
 
-  # Obtain the predicate of an instruction.
-  #
-  # This is only valid for instructions that correspond to llvm::ICmpInst
-  # or llvm::ConstantExpr whose opcode is llvm::Instruction::ICmp.
-  #
-  # @see llvm::ICmpInst::getPredicate()
+  # (Not documented)
   #
   # @method get_i_cmp_predicate(inst)
   # @param [OpaqueValue] inst
@@ -4264,13 +3980,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_i_cmp_predicate, :LLVMGetICmpPredicate, [OpaqueValue], :int_predicate
 
-  # Set the calling convention for a call instruction.
-  #
-  # This expects an LLVMValueRef that corresponds to a llvm::CallInst or
-  # llvm::InvokeInst.
-  #
-  # @see llvm::CallInst::setCallingConv()
-  # @see llvm::InvokeInst::setCallingConv()
+  # (Not documented)
   #
   # @method set_instruction_call_conv(instr, cc)
   # @param [OpaqueValue] instr
@@ -4279,12 +3989,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_instruction_call_conv, :LLVMSetInstructionCallConv, [OpaqueValue, :uint], :void
 
-  # Obtain the calling convention for a call instruction.
-  #
-  # This is the opposite of LLVMSetInstructionCallConv(). Reads its
-  # usage.
-  #
-  # @see LLVMSetInstructionCallConv()
+  # (Not documented)
   #
   # @method get_instruction_call_conv(instr)
   # @param [OpaqueValue] instr
@@ -4322,11 +4027,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_instr_param_alignment, :LLVMSetInstrParamAlignment, [OpaqueValue, :uint, :uint], :void
 
-  # Obtain whether a call instruction is a tail call.
-  #
-  # This only works on llvm::CallInst instructions.
-  #
-  # @see llvm::CallInst::isTailCall()
+  # (Not documented)
   #
   # @method is_tail_call(call_inst)
   # @param [OpaqueValue] call_inst
@@ -4334,11 +4035,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :is_tail_call, :LLVMIsTailCall, [OpaqueValue], :int
 
-  # Set whether a call instruction is a tail call.
-  #
-  # This only works on llvm::CallInst instructions.
-  #
-  # @see llvm::CallInst::setTailCall()
+  # (Not documented)
   #
   # @method set_tail_call(call_inst, is_tail_call)
   # @param [OpaqueValue] call_inst
@@ -4347,11 +4044,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_tail_call, :LLVMSetTailCall, [OpaqueValue, :int], :void
 
-  # Obtain the default destination basic block of a switch instruction.
-  #
-  # This only works on llvm::SwitchInst instructions.
-  #
-  # @see llvm::SwitchInst::getDefaultDest()
+  # (Not documented)
   #
   # @method get_switch_default_dest(switch_instr)
   # @param [OpaqueValue] switch_instr
@@ -4359,7 +4052,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_switch_default_dest, :LLVMGetSwitchDefaultDest, [OpaqueValue], OpaqueBasicBlock
 
-  # Add an incoming value to the end of a PHI list.
+  # (Not documented)
   #
   # @method add_incoming(phi_node, incoming_values, incoming_blocks, count)
   # @param [OpaqueValue] phi_node
@@ -4370,7 +4063,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_incoming, :LLVMAddIncoming, [OpaqueValue, :pointer, :pointer, :uint], :void
 
-  # Obtain the number of incoming basic blocks to a PHI node.
+  # (Not documented)
   #
   # @method count_incoming(phi_node)
   # @param [OpaqueValue] phi_node
@@ -4378,7 +4071,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :count_incoming, :LLVMCountIncoming, [OpaqueValue], :uint
 
-  # Obtain an incoming value to a PHI node as an LLVMValueRef.
+  # (Not documented)
   #
   # @method get_incoming_value(phi_node, index)
   # @param [OpaqueValue] phi_node
@@ -4387,7 +4080,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_incoming_value, :LLVMGetIncomingValue, [OpaqueValue, :uint], OpaqueValue
 
-  # Obtain an incoming value to a PHI node as an LLVMBasicBlockRef.
+  # (Not documented)
   #
   # @method get_incoming_block(phi_node, index)
   # @param [OpaqueValue] phi_node
@@ -4396,12 +4089,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_incoming_block, :LLVMGetIncomingBlock, [OpaqueValue, :uint], OpaqueBasicBlock
 
-  # @defgroup LLVMCCoreInstructionBuilder Instruction Builders
-  #
-  # An instruction builder represents a point within a basic block and is
-  # the exclusive means of building instructions using the C interface.
-  #
-  # @{
+  # (Not documented)
   #
   # @method create_builder_in_context(c)
   # @param [OpaqueContext] c
@@ -4487,7 +4175,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_builder, :LLVMDisposeBuilder, [OpaqueBuilder], :void
 
-  # Metadata
+  # (Not documented)
   #
   # @method set_current_debug_location(builder, l)
   # @param [OpaqueBuilder] builder
@@ -4513,7 +4201,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_inst_debug_location, :LLVMSetInstDebugLocation, [OpaqueBuilder, OpaqueValue], :void
 
-  # Terminators
+  # (Not documented)
   #
   # @method build_ret_void(opaque_builder)
   # @param [OpaqueBuilder] opaque_builder
@@ -4624,7 +4312,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :build_unreachable, :LLVMBuildUnreachable, [OpaqueBuilder], OpaqueValue
 
-  # Add a case to the switch instruction
+  # (Not documented)
   #
   # @method add_case(switch, on_val, dest)
   # @param [OpaqueValue] switch
@@ -4634,7 +4322,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_case, :LLVMAddCase, [OpaqueValue, OpaqueValue, OpaqueBasicBlock], :void
 
-  # Add a destination to the indirectbr instruction
+  # (Not documented)
   #
   # @method add_destination(indirect_br, dest)
   # @param [OpaqueValue] indirect_br
@@ -4643,7 +4331,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_destination, :LLVMAddDestination, [OpaqueValue, OpaqueBasicBlock], :void
 
-  # Add a catch or filter clause to the landingpad instruction
+  # (Not documented)
   #
   # @method add_clause(landing_pad, clause_val)
   # @param [OpaqueValue] landing_pad
@@ -4652,7 +4340,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_clause, :LLVMAddClause, [OpaqueValue, OpaqueValue], :void
 
-  # Set the 'cleanup' flag in the landingpad instruction
+  # (Not documented)
   #
   # @method set_cleanup(landing_pad, val)
   # @param [OpaqueValue] landing_pad
@@ -4661,7 +4349,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_cleanup, :LLVMSetCleanup, [OpaqueValue, :int], :void
 
-  # Arithmetic
+  # (Not documented)
   #
   # @method build_add(opaque_builder, lhs, rhs, name)
   # @param [OpaqueBuilder] opaque_builder
@@ -4998,7 +4686,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :build_not, :LLVMBuildNot, [OpaqueBuilder, OpaqueValue, :string], OpaqueValue
 
-  # Memory
+  # (Not documented)
   #
   # @method build_malloc(opaque_builder, ty, name)
   # @param [OpaqueBuilder] opaque_builder
@@ -5141,7 +4829,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_volatile, :LLVMSetVolatile, [OpaqueValue, :int], :void
 
-  # Casts
+  # (Not documented)
   #
   # @method build_trunc(opaque_builder, val, dest_ty, name)
   # @param [OpaqueBuilder] opaque_builder
@@ -5362,7 +5050,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :build_fp_cast, :LLVMBuildFPCast, [OpaqueBuilder, OpaqueValue, OpaqueType, :string], OpaqueValue
 
-  # Comparisons
+  # (Not documented)
   #
   # @method build_i_cmp(opaque_builder, op, lhs, rhs, name)
   # @param [OpaqueBuilder] opaque_builder
@@ -5386,7 +5074,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :build_f_cmp, :LLVMBuildFCmp, [OpaqueBuilder, :real_predicate, OpaqueValue, OpaqueValue, :string], OpaqueValue
 
-  # Miscellaneous instructions
+  # (Not documented)
   #
   # @method build_phi(opaque_builder, ty, name)
   # @param [OpaqueBuilder] opaque_builder
@@ -5522,6 +5210,17 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method build_fence(b, ordering, single_thread, name)
+  # @param [OpaqueBuilder] b
+  # @param [Symbol from _enum_atomic_ordering_] ordering
+  # @param [Integer] single_thread
+  # @param [String] name
+  # @return [OpaqueValue]
+  # @scope class
+  attach_function :build_fence, :LLVMBuildFence, [OpaqueBuilder, :atomic_ordering, :int, :string], OpaqueValue
+
+  # (Not documented)
+  #
   # @method build_atomic_rmw(b, op, ptr, val, ordering, single_thread)
   # @param [OpaqueBuilder] b
   # @param [Symbol from _enum_atomic_rmw_bin_op_] op
@@ -5533,8 +5232,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :build_atomic_rmw, :LLVMBuildAtomicRMW, [OpaqueBuilder, :atomic_rmw_bin_op, OpaqueValue, OpaqueValue, :atomic_ordering, :int], OpaqueValue
 
-  # Changes the type of M so it can be passed to FunctionPassManagers and the
-  # JIT.  They take ModuleProviders for historical reasons.
+  # (Not documented)
   #
   # @method create_module_provider_for_existing_module(m)
   # @param [OpaqueModule] m
@@ -5542,7 +5240,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_module_provider_for_existing_module, :LLVMCreateModuleProviderForExistingModule, [OpaqueModule], OpaqueModuleProvider
 
-  # Destroys the module M.
+  # (Not documented)
   #
   # @method dispose_module_provider(m)
   # @param [OpaqueModuleProvider] m
@@ -5550,9 +5248,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_module_provider, :LLVMDisposeModuleProvider, [OpaqueModuleProvider], :void
 
-  # @defgroup LLVMCCoreMemoryBuffers Memory Buffers
-  #
-  # @{
+  # (Not documented)
   #
   # @method create_memory_buffer_with_contents_of_file(path, out_mem_buf, out_message)
   # @param [String] path
@@ -5616,27 +5312,21 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_memory_buffer, :LLVMDisposeMemoryBuffer, [OpaqueMemoryBuffer], :void
 
-  # Return the global pass registry, for use with initialization functions.
-  #     @see llvm::PassRegistry::getPassRegistry
+  # (Not documented)
   #
   # @method get_global_pass_registry()
   # @return [OpaquePassRegistry]
   # @scope class
   attach_function :get_global_pass_registry, :LLVMGetGlobalPassRegistry, [], OpaquePassRegistry
 
-  # Constructs a new whole-module pass pipeline. This type of pipeline is
-  #     suitable for link-time optimization and whole-module transformations.
-  #     @see llvm::PassManager::PassManager
+  # (Not documented)
   #
   # @method create_pass_manager()
   # @return [OpaquePassManager]
   # @scope class
   attach_function :create_pass_manager, :LLVMCreatePassManager, [], OpaquePassManager
 
-  # Constructs a new function-by-function pass pipeline over the module
-  #     provider. It does not take ownership of the module provider. This type of
-  #     pipeline is suitable for code generation and JIT compilation tasks.
-  #     @see llvm::FunctionPassManager::FunctionPassManager
+  # (Not documented)
   #
   # @method create_function_pass_manager_for_module(m)
   # @param [OpaqueModule] m
@@ -5644,7 +5334,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_function_pass_manager_for_module, :LLVMCreateFunctionPassManagerForModule, [OpaqueModule], OpaquePassManager
 
-  # Deprecated: Use LLVMCreateFunctionPassManagerForModule instead.
+  # (Not documented)
   #
   # @method create_function_pass_manager(mp)
   # @param [OpaqueModuleProvider] mp
@@ -5652,10 +5342,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_function_pass_manager, :LLVMCreateFunctionPassManager, [OpaqueModuleProvider], OpaquePassManager
 
-  # Initializes, executes on the provided module, and finalizes all of the
-  #     passes scheduled in the pass manager. Returns 1 if any of the passes
-  #     modified the module, 0 otherwise.
-  #     @see llvm::PassManager::run(Module&)
+  # (Not documented)
   #
   # @method run_pass_manager(pm, m)
   # @param [OpaquePassManager] pm
@@ -5664,9 +5351,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :run_pass_manager, :LLVMRunPassManager, [OpaquePassManager, OpaqueModule], :int
 
-  # Initializes all of the function passes scheduled in the function pass
-  #     manager. Returns 1 if any of the passes modified the module, 0 otherwise.
-  #     @see llvm::FunctionPassManager::doInitialization
+  # (Not documented)
   #
   # @method initialize_function_pass_manager(fpm)
   # @param [OpaquePassManager] fpm
@@ -5674,10 +5359,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :initialize_function_pass_manager, :LLVMInitializeFunctionPassManager, [OpaquePassManager], :int
 
-  # Executes all of the function passes scheduled in the function pass manager
-  #     on the provided function. Returns 1 if any of the passes modified the
-  #     function, false otherwise.
-  #     @see llvm::FunctionPassManager::run(Function&)
+  # (Not documented)
   #
   # @method run_function_pass_manager(fpm, f)
   # @param [OpaquePassManager] fpm
@@ -5686,9 +5368,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :run_function_pass_manager, :LLVMRunFunctionPassManager, [OpaquePassManager, OpaqueValue], :int
 
-  # Finalizes all of the function passes scheduled in in the function pass
-  #     manager. Returns 1 if any of the passes modified the module, 0 otherwise.
-  #     @see llvm::FunctionPassManager::doFinalization
+  # (Not documented)
   #
   # @method finalize_function_pass_manager(fpm)
   # @param [OpaquePassManager] fpm
@@ -5696,9 +5376,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :finalize_function_pass_manager, :LLVMFinalizeFunctionPassManager, [OpaquePassManager], :int
 
-  # Frees the memory of a pass pipeline. For function pipelines, does not free
-  #     the module provider.
-  #     @see llvm::PassManagerBase::~PassManagerBase.
+  # (Not documented)
   #
   # @method dispose_pass_manager(pm)
   # @param [OpaquePassManager] pm
@@ -5706,28 +5384,21 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_pass_manager, :LLVMDisposePassManager, [OpaquePassManager], :void
 
-  # Allocate and initialize structures needed to make LLVM safe for
-  #     multithreading. The return value indicates whether multithreaded
-  #     initialization succeeded. Must be executed in isolation from all
-  #     other LLVM api calls.
-  #     @see llvm::llvm_start_multithreaded
+  # (Not documented)
   #
   # @method start_multithreaded()
   # @return [Integer]
   # @scope class
   attach_function :start_multithreaded, :LLVMStartMultithreaded, [], :int
 
-  # Deallocate structures necessary to make LLVM safe for multithreading.
-  #     Must be executed in isolation from all other LLVM api calls.
-  #     @see llvm::llvm_stop_multithreaded
+  # (Not documented)
   #
   # @method stop_multithreaded()
   # @return [nil]
   # @scope class
   attach_function :stop_multithreaded, :LLVMStopMultithreaded, [], :void
 
-  # Check whether LLVM is executing in thread-safe mode or not.
-  #     @see llvm::llvm_is_multithreaded
+  # (Not documented)
   #
   # @method is_multithreaded()
   # @return [Integer]
@@ -5755,9 +5426,7 @@ module RCGTK::Bindings
     :return_status, 2
   ]
 
-  # Verifies that a module is valid, taking the specified action if not.
-  #    Optionally returns a human-readable description of any invalid constructs.
-  #    OutMessage must be disposed with LLVMDisposeMessage.
+  # (Not documented)
   #
   # @method verify_module(m, action, out_message)
   # @param [OpaqueModule] m
@@ -5767,8 +5436,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :verify_module, :LLVMVerifyModule, [OpaqueModule, :verifier_failure_action, :pointer], :int
 
-  # Verifies that a single function is valid, taking the specified action. Useful
-  #    for debugging.
+  # (Not documented)
   #
   # @method verify_function(fn, action)
   # @param [OpaqueValue] fn
@@ -5777,8 +5445,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :verify_function, :LLVMVerifyFunction, [OpaqueValue, :verifier_failure_action], :int
 
-  # Open up a ghostview window that displays the CFG of the current function.
-  #    Useful for debugging.
+  # (Not documented)
   #
   # @method view_function_cfg(fn)
   # @param [OpaqueValue] fn
@@ -5815,9 +5482,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :parse_bitcode_in_context, :LLVMParseBitcodeInContext, [OpaqueContext, OpaqueMemoryBuffer, :pointer, :pointer], :int
 
-  # Reads a module from the specified path, returning via the OutMP parameter
-  #     a module provider which performs lazy deserialization. Returns 0 on success.
-  #     Optionally returns a human-readable error message via OutMessage.
+  # (Not documented)
   #
   # @method get_bitcode_module_in_context(context_ref, mem_buf, out_m, out_message)
   # @param [OpaqueContext] context_ref
@@ -5838,7 +5503,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_bitcode_module, :LLVMGetBitcodeModule, [OpaqueMemoryBuffer, :pointer, :pointer], :int
 
-  # Deprecated: Use LLVMGetBitcodeModuleInContext instead.
+  # (Not documented)
   #
   # @method get_bitcode_module_provider_in_context(context_ref, mem_buf, out_mp, out_message)
   # @param [OpaqueContext] context_ref
@@ -5849,7 +5514,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_bitcode_module_provider_in_context, :LLVMGetBitcodeModuleProviderInContext, [OpaqueContext, OpaqueMemoryBuffer, :pointer, :pointer], :int
 
-  # Deprecated: Use LLVMGetBitcodeModule instead.
+  # (Not documented)
   #
   # @method get_bitcode_module_provider(mem_buf, out_mp, out_message)
   # @param [OpaqueMemoryBuffer] mem_buf
@@ -5868,7 +5533,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :write_bitcode_to_file, :LLVMWriteBitcodeToFile, [OpaqueModule, :string], :int
 
-  # Writes a module to an open file descriptor. Returns 0 on success.
+  # (Not documented)
   #
   # @method write_bitcode_to_fd(m, fd, should_close, unbuffered)
   # @param [OpaqueModule] m
@@ -5879,8 +5544,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :write_bitcode_to_fd, :LLVMWriteBitcodeToFD, [OpaqueModule, :int, :int, :int], :int
 
-  # Deprecated for LLVMWriteBitcodeToFD. Writes a module to an open file
-  #     descriptor. Returns 0 on success. Closes the Handle.
+  # (Not documented)
   #
   # @method write_bitcode_to_file_handle(m, handle)
   # @param [OpaqueModule] m
@@ -5889,25 +5553,12 @@ module RCGTK::Bindings
   # @scope class
   attach_function :write_bitcode_to_file_handle, :LLVMWriteBitcodeToFileHandle, [OpaqueModule, :int], :int
 
-  # The type for the operand information call back function.  This is called to
-  # get the symbolic information for an operand of an instruction.  Typically
-  # this is from the relocation information, symbol table, etc.  That block of
-  # information is saved when the disassembler context is created and passed to
-  # the call back in the DisInfo parameter.  The instruction containing operand
-  # is at the PC parameter.  For some instruction sets, there can be more than
-  # one operand with symbolic information.  To determine the symbolic operand
-  # information for each operand, the bytes for the specific operand in the
-  # instruction are specified by the Offset parameter and its byte widith is the
-  # size parameter.  For instructions sets with fixed widths and one symbolic
-  # operand per instruction, the Offset parameter will be zero and Size parameter
-  # will be the instruction width.  The information is returned in TagBuf and is
-  # Triple specific with its specific information defined by the value of
-  # TagType for that Triple.  If symbolic information is returned the function
-  # returns 1, otherwise it returns 0.
+  # (Not documented)
   #
   # <em>This entry is only for documentation and no real method.</em>
   #
-  # @method _callback_op_info_callback_(pc, offset, size, tag_type, tag_buf)
+  # @method _callback_op_info_callback_(dis_info, pc, offset, size, tag_type, tag_buf)
+  # @param [FFI::Pointer(*Void)] dis_info
   # @param [Integer] pc
   # @param [Integer] offset
   # @param [Integer] size
@@ -5915,26 +5566,9 @@ module RCGTK::Bindings
   # @param [FFI::Pointer(*Void)] tag_buf
   # @return [FFI::Pointer(*Void)]
   # @scope class
-  callback :op_info_callback, [:ulong, :ulong, :ulong, :int, :pointer], :pointer
+  callback :op_info_callback, [:pointer, :ulong, :ulong, :ulong, :int, :pointer], :pointer
 
-  # The initial support in LLVM MC for the most general form of a relocatable
-  # expression is "AddSymbol - SubtractSymbol + Offset".  For some Darwin targets
-  # this full form is encoded in the relocation information so that AddSymbol and
-  # SubtractSymbol can be link edited independent of each other.  Many other
-  # platforms only allow a relocatable expression of the form AddSymbol + Offset
-  # to be encoded.
-  #
-  # The LLVMOpInfoCallback() for the TagType value of 1 uses the struct
-  # LLVMOpInfo1.  The value of the relocatable expression for the operand,
-  # including any PC adjustment, is passed in to the call back in the Value
-  # field.  The symbolic information about the operand is returned using all
-  # the fields of the structure with the Offset of the relocatable expression
-  # returned in the Value field.  It is possible that some symbols in the
-  # relocatable expression were assembly temporary symbols, for example
-  # "Ldata - LpicBase + constant", and only the Values of the symbols without
-  # symbol names are present in the relocation information.  The VariantKind
-  # type is one of the Target specific #defines below and is used to print
-  # operands like "_foo@GOT", ":lower16:_foo", etc.
+  # (Not documented)
   #
   # = Fields:
   # :present ::
@@ -5949,7 +5583,7 @@ module RCGTK::Bindings
            :value, :ulong
   end
 
-  # symbol value if name is NULL
+  # (Not documented)
   #
   # = Fields:
   # :add_symbol ::
@@ -5967,34 +5601,21 @@ module RCGTK::Bindings
            :variant_kind, :ulong
   end
 
-  # The type for the symbol lookup function.  This may be called by the
-  # disassembler for things like adding a comment for a PC plus a constant
-  # offset load instruction to use a symbol name instead of a load address value.
-  # It is passed the block information is saved when the disassembler context is
-  # created and the ReferenceValue to look up as a symbol.  If no symbol is found
-  # for the ReferenceValue NULL is returned.  The ReferenceType of the
-  # instruction is passed indirectly as is the PC of the instruction in
-  # ReferencePC.  If the output reference can be determined its type is returned
-  # indirectly in ReferenceType along with ReferenceName if any, or that is set
-  # to NULL.
+  # (Not documented)
   #
   # <em>This entry is only for documentation and no real method.</em>
   #
-  # @method _callback_symbol_lookup_callback_(reference_value, reference_type, reference_pc, reference_name)
+  # @method _callback_symbol_lookup_callback_(dis_info, reference_value, reference_type, reference_pc, reference_name)
+  # @param [FFI::Pointer(*Void)] dis_info
   # @param [Integer] reference_value
   # @param [FFI::Pointer(*Uint64T)] reference_type
   # @param [Integer] reference_pc
   # @param [FFI::Pointer(**CharS)] reference_name
   # @return [FFI::Pointer(*Void)]
   # @scope class
-  callback :symbol_lookup_callback, [:ulong, :pointer, :ulong, :pointer], :pointer
+  callback :symbol_lookup_callback, [:pointer, :ulong, :pointer, :ulong, :pointer], :pointer
 
-  # Create a disassembler for the TripleName.  Symbolic disassembly is supported
-  # by passing a block of information in the DisInfo parameter and specifying the
-  # TagType and callback functions as described above.  These can all be passed
-  # as NULL.  If successful, this returns a disassembler context.  If not, it
-  # returns NULL. This function is equivalent to calling LLVMCreateDisasmCPU()
-  # with an empty CPU name.
+  # (Not documented)
   #
   # @method create_disasm(triple_name, dis_info, tag_type, get_op_info, symbol_look_up)
   # @param [String] triple_name
@@ -6006,11 +5627,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_disasm, :LLVMCreateDisasm, [:string, :pointer, :int, :op_info_callback, :symbol_lookup_callback], :pointer
 
-  # Create a disassembler for the TripleName and a specific CPU.  Symbolic
-  # disassembly is supported by passing a block of information in the DisInfo
-  # parameter and specifying the TagType and callback functions as described
-  # above.  These can all be passed * as NULL.  If successful, this returns a
-  # disassembler context.  If not, it returns NULL.
+  # (Not documented)
   #
   # @method create_disasm_cpu(triple, cpu, dis_info, tag_type, get_op_info, symbol_look_up)
   # @param [String] triple
@@ -6023,8 +5640,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_disasm_cpu, :LLVMCreateDisasmCPU, [:string, :string, :pointer, :int, :op_info_callback, :symbol_lookup_callback], :pointer
 
-  # Set the disassembler's options.  Returns 1 if it can set the Options and 0
-  # otherwise.
+  # (Not documented)
   #
   # @method set_disasm_options(dc, options)
   # @param [FFI::Pointer(DisasmContextRef)] dc
@@ -6033,7 +5649,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_disasm_options, :LLVMSetDisasmOptions, [:pointer, :ulong], :int
 
-  # Dispose of a disassembler context.
+  # (Not documented)
   #
   # @method disasm_dispose(dc)
   # @param [FFI::Pointer(DisasmContextRef)] dc
@@ -6041,14 +5657,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :disasm_dispose, :LLVMDisasmDispose, [:pointer], :void
 
-  # Disassemble a single instruction using the disassembler context specified in
-  # the parameter DC.  The bytes of the instruction are specified in the
-  # parameter Bytes, and contains at least BytesSize number of bytes.  The
-  # instruction is at the address specified by the PC parameter.  If a valid
-  # instruction can be disassembled, its string is returned indirectly in
-  # OutString whose size is specified in the parameter OutStringSize.  This
-  # function returns the number of bytes in the instruction or zero if there was
-  # no valid instruction.
+  # (Not documented)
   #
   # @method disasm_instruction(dc, bytes, bytes_size, pc, out_string, out_string_size)
   # @param [FFI::Pointer(DisasmContextRef)] dc
@@ -6096,89 +5705,70 @@ module RCGTK::Bindings
   # @scope class
   attach_function :initialize_all_target_infos, :LLVMInitializeAllTargetInfos, [], :void
 
-  # LLVMInitializeAllTargets - The main program should call this function if it
-  #     wants to link in all available targets that LLVM is configured to
-  #     support.
+  # (Not documented)
   #
   # @method initialize_all_targets()
   # @return [nil]
   # @scope class
   attach_function :initialize_all_targets, :LLVMInitializeAllTargets, [], :void
 
-  # LLVMInitializeAllTargetMCs - The main program should call this function if
-  #     it wants access to all available target MC that LLVM is configured to
-  #     support.
+  # (Not documented)
   #
   # @method initialize_all_target_m_cs()
   # @return [nil]
   # @scope class
-  attach_function :initialize_all_target_mcs, :LLVMInitializeAllTargetMCs, [], :void
+  attach_function :initialize_all_target_m_cs, :LLVMInitializeAllTargetMCs, [], :void
 
-  # LLVMInitializeAllAsmPrinters - The main program should call this function if
-  #     it wants all asm printers that LLVM is configured to support, to make them
-  #     available via the TargetRegistry.
+  # (Not documented)
   #
   # @method initialize_all_asm_printers()
   # @return [nil]
   # @scope class
   attach_function :initialize_all_asm_printers, :LLVMInitializeAllAsmPrinters, [], :void
 
-  # LLVMInitializeAllAsmParsers - The main program should call this function if
-  #     it wants all asm parsers that LLVM is configured to support, to make them
-  #     available via the TargetRegistry.
+  # (Not documented)
   #
   # @method initialize_all_asm_parsers()
   # @return [nil]
   # @scope class
   attach_function :initialize_all_asm_parsers, :LLVMInitializeAllAsmParsers, [], :void
 
-  # LLVMInitializeAllDisassemblers - The main program should call this function
-  #     if it wants all disassemblers that LLVM is configured to support, to make
-  #     them available via the TargetRegistry.
+  # (Not documented)
   #
   # @method initialize_all_disassemblers()
   # @return [nil]
   # @scope class
   attach_function :initialize_all_disassemblers, :LLVMInitializeAllDisassemblers, [], :void
 
-  # LLVMInitializeNativeTarget - The main program should call this function to
-  #     initialize the native target corresponding to the host.  This is useful
-  #     for JIT applications to ensure that the target gets linked in correctly.
+  # (Not documented)
   #
   # @method initialize_native_target()
   # @return [Integer]
   # @scope class
   attach_function :initialize_native_target, :LLVMInitializeNativeTarget, [], :int
 
-  # LLVMInitializeNativeTargetAsmParser - The main program should call this
-  #     function to initialize the parser for the native target corresponding to the
-  #     host.
+  # (Not documented)
   #
   # @method initialize_native_asm_parser()
   # @return [Integer]
   # @scope class
   attach_function :initialize_native_asm_parser, :LLVMInitializeNativeAsmParser, [], :int
 
-  # LLVMInitializeNativeTargetAsmPrinter - The main program should call this
-  #     function to initialize the printer for the native target corresponding to
-  #     the host.
+  # (Not documented)
   #
   # @method initialize_native_asm_printer()
   # @return [Integer]
   # @scope class
   attach_function :initialize_native_asm_printer, :LLVMInitializeNativeAsmPrinter, [], :int
 
-  # LLVMInitializeNativeTargetDisassembler - The main program should call this
-  #     function to initialize the disassembler for the native target corresponding
-  #     to the host.
+  # (Not documented)
   #
   # @method initialize_native_disassembler()
   # @return [Integer]
   # @scope class
   attach_function :initialize_native_disassembler, :LLVMInitializeNativeDisassembler, [], :int
 
-  # Creates target data from a target layout string.
-  #     See the constructor llvm::DataLayout::DataLayout.
+  # (Not documented)
   #
   # @method create_target_data(string_rep)
   # @param [String] string_rep
@@ -6186,9 +5776,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_target_data, :LLVMCreateTargetData, [:string], OpaqueTargetData
 
-  # Adds target data information to a pass manager. This does not take ownership
-  #     of the target data.
-  #     See the method llvm::PassManagerBase::add.
+  # (Not documented)
   #
   # @method add_target_data(td, pm)
   # @param [OpaqueTargetData] td
@@ -6197,9 +5785,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_target_data, :LLVMAddTargetData, [OpaqueTargetData, OpaquePassManager], :void
 
-  # Adds target library information to a pass manager. This does not take
-  #     ownership of the target library info.
-  #     See the method llvm::PassManagerBase::add.
+  # (Not documented)
   #
   # @method add_target_library_info(tli, pm)
   # @param [OpaqueTargetLibraryInfotData] tli
@@ -6208,9 +5794,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_target_library_info, :LLVMAddTargetLibraryInfo, [OpaqueTargetLibraryInfotData, OpaquePassManager], :void
 
-  # Converts target data to a target layout string. The string must be disposed
-  #     with LLVMDisposeMessage.
-  #     See the constructor llvm::DataLayout::DataLayout.
+  # (Not documented)
   #
   # @method copy_string_rep_of_target_data(td)
   # @param [OpaqueTargetData] td
@@ -6218,9 +5802,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :copy_string_rep_of_target_data, :LLVMCopyStringRepOfTargetData, [OpaqueTargetData], :string
 
-  # Returns the byte order of a target, either LLVMBigEndian or
-  #     LLVMLittleEndian.
-  #     See the method llvm::DataLayout::isLittleEndian.
+  # (Not documented)
   #
   # @method byte_order(td)
   # @param [OpaqueTargetData] td
@@ -6228,8 +5810,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :byte_order, :LLVMByteOrder, [OpaqueTargetData], :byte_ordering
 
-  # Returns the pointer size in bytes for a target.
-  #     See the method llvm::DataLayout::getPointerSize.
+  # (Not documented)
   #
   # @method pointer_size(td)
   # @param [OpaqueTargetData] td
@@ -6237,9 +5818,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pointer_size, :LLVMPointerSize, [OpaqueTargetData], :uint
 
-  # Returns the pointer size in bytes for a target for a specified
-  #     address space.
-  #     See the method llvm::DataLayout::getPointerSize.
+  # (Not documented)
   #
   # @method pointer_size_for_as(td, as)
   # @param [OpaqueTargetData] td
@@ -6248,8 +5827,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pointer_size_for_as, :LLVMPointerSizeForAS, [OpaqueTargetData, :uint], :uint
 
-  # Returns the integer type that is the same size as a pointer on a target.
-  #     See the method llvm::DataLayout::getIntPtrType.
+  # (Not documented)
   #
   # @method int_ptr_type(td)
   # @param [OpaqueTargetData] td
@@ -6257,9 +5835,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :int_ptr_type, :LLVMIntPtrType, [OpaqueTargetData], OpaqueType
 
-  # Returns the integer type that is the same size as a pointer on a target.
-  #     This version allows the address space to be specified.
-  #     See the method llvm::DataLayout::getIntPtrType.
+  # (Not documented)
   #
   # @method int_ptr_type_for_as(td, as)
   # @param [OpaqueTargetData] td
@@ -6268,8 +5844,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :int_ptr_type_for_as, :LLVMIntPtrTypeForAS, [OpaqueTargetData, :uint], OpaqueType
 
-  # Returns the integer type that is the same size as a pointer on a target.
-  #     See the method llvm::DataLayout::getIntPtrType.
+  # (Not documented)
   #
   # @method int_ptr_type_in_context(c, td)
   # @param [OpaqueContext] c
@@ -6278,9 +5853,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :int_ptr_type_in_context, :LLVMIntPtrTypeInContext, [OpaqueContext, OpaqueTargetData], OpaqueType
 
-  # Returns the integer type that is the same size as a pointer on a target.
-  #     This version allows the address space to be specified.
-  #     See the method llvm::DataLayout::getIntPtrType.
+  # (Not documented)
   #
   # @method int_ptr_type_for_as_in_context(c, td, as)
   # @param [OpaqueContext] c
@@ -6290,8 +5863,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :int_ptr_type_for_as_in_context, :LLVMIntPtrTypeForASInContext, [OpaqueContext, OpaqueTargetData, :uint], OpaqueType
 
-  # Computes the size of a type in bytes for a target.
-  #     See the method llvm::DataLayout::getTypeSizeInBits.
+  # (Not documented)
   #
   # @method size_of_type_in_bits(td, ty)
   # @param [OpaqueTargetData] td
@@ -6300,8 +5872,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :size_of_type_in_bits, :LLVMSizeOfTypeInBits, [OpaqueTargetData, OpaqueType], :ulong_long
 
-  # Computes the storage size of a type in bytes for a target.
-  #     See the method llvm::DataLayout::getTypeStoreSize.
+  # (Not documented)
   #
   # @method store_size_of_type(td, ty)
   # @param [OpaqueTargetData] td
@@ -6310,8 +5881,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :store_size_of_type, :LLVMStoreSizeOfType, [OpaqueTargetData, OpaqueType], :ulong_long
 
-  # Computes the ABI size of a type in bytes for a target.
-  #     See the method llvm::DataLayout::getTypeAllocSize.
+  # (Not documented)
   #
   # @method abi_size_of_type(td, ty)
   # @param [OpaqueTargetData] td
@@ -6320,8 +5890,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :abi_size_of_type, :LLVMABISizeOfType, [OpaqueTargetData, OpaqueType], :ulong_long
 
-  # Computes the ABI alignment of a type in bytes for a target.
-  #     See the method llvm::DataLayout::getTypeABISize.
+  # (Not documented)
   #
   # @method abi_alignment_of_type(td, ty)
   # @param [OpaqueTargetData] td
@@ -6330,8 +5899,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :abi_alignment_of_type, :LLVMABIAlignmentOfType, [OpaqueTargetData, OpaqueType], :uint
 
-  # Computes the call frame alignment of a type in bytes for a target.
-  #     See the method llvm::DataLayout::getTypeABISize.
+  # (Not documented)
   #
   # @method call_frame_alignment_of_type(td, ty)
   # @param [OpaqueTargetData] td
@@ -6340,8 +5908,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :call_frame_alignment_of_type, :LLVMCallFrameAlignmentOfType, [OpaqueTargetData, OpaqueType], :uint
 
-  # Computes the preferred alignment of a type in bytes for a target.
-  #     See the method llvm::DataLayout::getTypeABISize.
+  # (Not documented)
   #
   # @method preferred_alignment_of_type(td, ty)
   # @param [OpaqueTargetData] td
@@ -6350,8 +5917,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :preferred_alignment_of_type, :LLVMPreferredAlignmentOfType, [OpaqueTargetData, OpaqueType], :uint
 
-  # Computes the preferred alignment of a global variable in bytes for a target.
-  #     See the method llvm::DataLayout::getPreferredAlignment.
+  # (Not documented)
   #
   # @method preferred_alignment_of_global(td, global_var)
   # @param [OpaqueTargetData] td
@@ -6360,8 +5926,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :preferred_alignment_of_global, :LLVMPreferredAlignmentOfGlobal, [OpaqueTargetData, OpaqueValue], :uint
 
-  # Computes the structure element that contains the byte offset for a target.
-  #     See the method llvm::StructLayout::getElementContainingOffset.
+  # (Not documented)
   #
   # @method element_at_offset(td, struct_ty, offset)
   # @param [OpaqueTargetData] td
@@ -6371,8 +5936,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :element_at_offset, :LLVMElementAtOffset, [OpaqueTargetData, OpaqueType, :ulong_long], :uint
 
-  # Computes the byte offset of the indexed struct element for a target.
-  #     See the method llvm::StructLayout::getElementContainingOffset.
+  # (Not documented)
   #
   # @method offset_of_element(td, struct_ty, element)
   # @param [OpaqueTargetData] td
@@ -6382,8 +5946,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :offset_of_element, :LLVMOffsetOfElement, [OpaqueTargetData, OpaqueType, :uint], :ulong_long
 
-  # Deallocates a TargetData.
-  #     See the destructor llvm::DataLayout::~DataLayout.
+  # (Not documented)
   #
   # @method dispose_target_data(td)
   # @param [OpaqueTargetData] td
@@ -6398,14 +5961,17 @@ module RCGTK::Bindings
 
   # (Not documented)
   module TargetWrappers
+    # @return [Integer]
     def has_jit()
       RCGTK::Bindings.target_has_jit(self)
     end
 
+    # @return [Integer]
     def has_target_machine()
       RCGTK::Bindings.target_has_target_machine(self)
     end
 
+    # @return [Integer]
     def has_asm_backend()
       RCGTK::Bindings.target_has_asm_backend(self)
     end
@@ -6512,14 +6078,14 @@ module RCGTK::Bindings
     :object, 1
   ]
 
-  # Returns the first llvm::Target in the registered targets list.
+  # (Not documented)
   #
   # @method get_first_target()
   # @return [Target]
   # @scope class
   attach_function :get_first_target, :LLVMGetFirstTarget, [], Target
 
-  # Returns the next llvm::Target given a previous one (or null if there's none)
+  # (Not documented)
   #
   # @method get_next_target(t)
   # @param [Target] t
@@ -6527,8 +6093,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_next_target, :LLVMGetNextTarget, [Target], Target
 
-  # Finds the target corresponding to the given name and stores it in \p T.
-  #   Returns 0 on success.
+  # (Not documented)
   #
   # @method get_target_from_name(name)
   # @param [String] name
@@ -6536,9 +6101,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_from_name, :LLVMGetTargetFromName, [:string], Target
 
-  # Finds the target corresponding to the given triple and stores it in \p T.
-  #   Returns 0 on success. Optionally returns any error in ErrorMessage.
-  #   Use LLVMDisposeMessage to dispose the message.
+  # (Not documented)
   #
   # @method get_target_from_triple(triple, t, error_message)
   # @param [String] triple
@@ -6548,7 +6111,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_from_triple, :LLVMGetTargetFromTriple, [:string, :pointer, :pointer], :int
 
-  # Returns the name of a target. See llvm::Target::getName
+  # (Not documented)
   #
   # @method get_target_name(t)
   # @param [Target] t
@@ -6556,7 +6119,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_name, :LLVMGetTargetName, [Target], :string
 
-  # Returns the description  of a target. See llvm::Target::getDescription
+  # (Not documented)
   #
   # @method get_target_description(t)
   # @param [Target] t
@@ -6564,7 +6127,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_description, :LLVMGetTargetDescription, [Target], :string
 
-  # Returns if the target has a JIT
+  # (Not documented)
   #
   # @method target_has_jit(t)
   # @param [Target] t
@@ -6572,7 +6135,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :target_has_jit, :LLVMTargetHasJIT, [Target], :int
 
-  # Returns if the target has a TargetMachine associated
+  # (Not documented)
   #
   # @method target_has_target_machine(t)
   # @param [Target] t
@@ -6580,7 +6143,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :target_has_target_machine, :LLVMTargetHasTargetMachine, [Target], :int
 
-  # Returns if the target as an ASM backend (required for emitting output)
+  # (Not documented)
   #
   # @method target_has_asm_backend(t)
   # @param [Target] t
@@ -6588,7 +6151,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :target_has_asm_backend, :LLVMTargetHasAsmBackend, [Target], :int
 
-  # Creates a new llvm::TargetMachine. See llvm::Target::createTargetMachine
+  # (Not documented)
   #
   # @method create_target_machine(t, triple, cpu, features, level, reloc, code_model)
   # @param [Target] t
@@ -6602,8 +6165,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_target_machine, :LLVMCreateTargetMachine, [Target, :string, :string, :string, :code_gen_opt_level, :reloc_mode, :code_model], OpaqueTargetMachine
 
-  # Dispose the LLVMTargetMachineRef instance generated by
-  #   LLVMCreateTargetMachine.
+  # (Not documented)
   #
   # @method dispose_target_machine(t)
   # @param [OpaqueTargetMachine] t
@@ -6611,7 +6173,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_target_machine, :LLVMDisposeTargetMachine, [OpaqueTargetMachine], :void
 
-  # Returns the Target used in a TargetMachine
+  # (Not documented)
   #
   # @method get_target_machine_target(t)
   # @param [OpaqueTargetMachine] t
@@ -6619,9 +6181,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_machine_target, :LLVMGetTargetMachineTarget, [OpaqueTargetMachine], Target
 
-  # Returns the triple used creating this target machine. See
-  #   llvm::TargetMachine::getTriple. The result needs to be disposed with
-  #   LLVMDisposeMessage.
+  # (Not documented)
   #
   # @method get_target_machine_triple(t)
   # @param [OpaqueTargetMachine] t
@@ -6629,9 +6189,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_machine_triple, :LLVMGetTargetMachineTriple, [OpaqueTargetMachine], :string
 
-  # Returns the cpu used creating this target machine. See
-  #   llvm::TargetMachine::getCPU. The result needs to be disposed with
-  #   LLVMDisposeMessage.
+  # (Not documented)
   #
   # @method get_target_machine_cpu(t)
   # @param [OpaqueTargetMachine] t
@@ -6639,9 +6197,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_machine_cpu, :LLVMGetTargetMachineCPU, [OpaqueTargetMachine], :string
 
-  # Returns the feature string used creating this target machine. See
-  #   llvm::TargetMachine::getFeatureString. The result needs to be disposed with
-  #   LLVMDisposeMessage.
+  # (Not documented)
   #
   # @method get_target_machine_feature_string(t)
   # @param [OpaqueTargetMachine] t
@@ -6649,7 +6205,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_machine_feature_string, :LLVMGetTargetMachineFeatureString, [OpaqueTargetMachine], :string
 
-  # Returns the llvm::DataLayout used for this llvm:TargetMachine.
+  # (Not documented)
   #
   # @method get_target_machine_data(t)
   # @param [OpaqueTargetMachine] t
@@ -6657,7 +6213,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_target_machine_data, :LLVMGetTargetMachineData, [OpaqueTargetMachine], OpaqueTargetData
 
-  # Set the target machine's ASM verbosity.
+  # (Not documented)
   #
   # @method set_target_machine_asm_verbosity(t, verbose_asm)
   # @param [OpaqueTargetMachine] t
@@ -6666,9 +6222,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :set_target_machine_asm_verbosity, :LLVMSetTargetMachineAsmVerbosity, [OpaqueTargetMachine, :int], :void
 
-  # Emits an asm or object file for the given module to the filename. This
-  #   wraps several c++ only classes (among them a file stream). Returns any
-  #   error in ErrorMessage. Use LLVMDisposeMessage to dispose the message.
+  # (Not documented)
   #
   # @method target_machine_emit_to_file(t, m, filename, codegen, error_message)
   # @param [OpaqueTargetMachine] t
@@ -6680,7 +6234,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :target_machine_emit_to_file, :LLVMTargetMachineEmitToFile, [OpaqueTargetMachine, OpaqueModule, :string, :code_gen_file_type, :pointer], :int
 
-  # Compile the LLVM IR stored in \p M and store the result in \p OutMemBuf.
+  # (Not documented)
   #
   # @method target_machine_emit_to_memory_buffer(t, m, codegen, error_message, out_mem_buf)
   # @param [OpaqueTargetMachine] t
@@ -6692,13 +6246,21 @@ module RCGTK::Bindings
   # @scope class
   attach_function :target_machine_emit_to_memory_buffer, :LLVMTargetMachineEmitToMemoryBuffer, [OpaqueTargetMachine, OpaqueModule, :code_gen_file_type, :pointer, :pointer], :int
 
-  # Get a triple for the host machine as a string. The result needs to be
-  #   disposed with LLVMDisposeMessage.
+  # (Not documented)
   #
   # @method get_default_target_triple()
   # @return [String]
   # @scope class
   attach_function :get_default_target_triple, :LLVMGetDefaultTargetTriple, [], :string
+
+  # (Not documented)
+  #
+  # @method add_analysis_passes(t, pm)
+  # @param [OpaqueTargetMachine] t
+  # @param [OpaquePassManager] pm
+  # @return [nil]
+  # @scope class
+  attach_function :add_analysis_passes, :LLVMAddAnalysisPasses, [OpaqueTargetMachine, OpaquePassManager], :void
 
   # (Not documented)
   #
@@ -6757,7 +6319,7 @@ module RCGTK::Bindings
            :mcjmm, OpaqueMCJITMemoryManager
   end
 
-  # ===-- Operations on generic values --------------------------------------===
+  # (Not documented)
   #
   # @method create_generic_value_of_int(ty, n, is_signed)
   # @param [OpaqueType] ty
@@ -6826,7 +6388,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_generic_value, :LLVMDisposeGenericValue, [OpaqueGenericValue], :void
 
-  # ===-- Operations on execution engines -----------------------------------===
+  # (Not documented)
   #
   # @method create_execution_engine_for_module(out_ee, m, out_error)
   # @param [FFI::Pointer(*ExecutionEngineRef)] out_ee
@@ -6866,21 +6428,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :initialize_mcjit_compiler_options, :LLVMInitializeMCJITCompilerOptions, [MCJITCompilerOptions, :ulong], :void
 
-  # Create an MCJIT execution engine for a module, with the given options. It is
-  # the responsibility of the caller to ensure that all fields in Options up to
-  # the given SizeOfOptions are initialized. It is correct to pass a smaller
-  # value of SizeOfOptions that omits some fields. The canonical way of using
-  # this is:
-  #
-  # LLVMMCJITCompilerOptions options;
-  # LLVMInitializeMCJITCompilerOptions(&options, sizeof(options));
-  # ... fill in those options you care about
-  # LLVMCreateMCJITCompilerForModule(&jit, mod, &options, sizeof(options),
-  #                                  &error);
-  #
-  # Note that this is also correct, though possibly suboptimal:
-  #
-  # LLVMCreateMCJITCompilerForModule(&jit, mod, 0, 0, &error);
+  # (Not documented)
   #
   # @method create_mcjit_compiler_for_module(out_jit, m, options, size_of_options, out_error)
   # @param [FFI::Pointer(*ExecutionEngineRef)] out_jit
@@ -6892,7 +6440,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_mcjit_compiler_for_module, :LLVMCreateMCJITCompilerForModule, [:pointer, OpaqueModule, MCJITCompilerOptions, :ulong, :pointer], :int
 
-  # Deprecated: Use LLVMCreateExecutionEngineForModule instead.
+  # (Not documented)
   #
   # @method create_execution_engine(out_ee, mp, out_error)
   # @param [FFI::Pointer(*ExecutionEngineRef)] out_ee
@@ -6902,7 +6450,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_execution_engine, :LLVMCreateExecutionEngine, [:pointer, OpaqueModuleProvider, :pointer], :int
 
-  # Deprecated: Use LLVMCreateInterpreterForModule instead.
+  # (Not documented)
   #
   # @method create_interpreter(out_interp, mp, out_error)
   # @param [FFI::Pointer(*ExecutionEngineRef)] out_interp
@@ -6912,7 +6460,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :create_interpreter, :LLVMCreateInterpreter, [:pointer, OpaqueModuleProvider, :pointer], :int
 
-  # Deprecated: Use LLVMCreateJITCompilerForModule instead.
+  # (Not documented)
   #
   # @method create_jit_compiler(out_jit, mp, opt_level, out_error)
   # @param [FFI::Pointer(*ExecutionEngineRef)] out_jit
@@ -6988,7 +6536,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_module, :LLVMAddModule, [OpaqueExecutionEngine, OpaqueModule], :void
 
-  # Deprecated: Use LLVMAddModule instead.
+  # (Not documented)
   #
   # @method add_module_provider(ee, mp)
   # @param [OpaqueExecutionEngine] ee
@@ -7008,7 +6556,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :remove_module, :LLVMRemoveModule, [OpaqueExecutionEngine, OpaqueModule, :pointer, :pointer], :int
 
-  # Deprecated: Use LLVMRemoveModule instead.
+  # (Not documented)
   #
   # @method remove_module_provider(ee, mp, out_mod, out_error)
   # @param [OpaqueExecutionEngine] ee
@@ -7048,6 +6596,14 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method get_execution_engine_target_machine(ee)
+  # @param [OpaqueExecutionEngine] ee
+  # @return [OpaqueTargetMachine]
+  # @scope class
+  attach_function :get_execution_engine_target_machine, :LLVMGetExecutionEngineTargetMachine, [OpaqueExecutionEngine], OpaqueTargetMachine
+
+  # (Not documented)
+  #
   # @method add_global_mapping(ee, global, addr)
   # @param [OpaqueExecutionEngine] ee
   # @param [OpaqueValue] global
@@ -7065,11 +6621,12 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_pointer_to_global, :LLVMGetPointerToGlobal, [OpaqueExecutionEngine, OpaqueValue], :pointer
 
-  # ===-- Operations on memory managers -------------------------------------===
+  # (Not documented)
   #
   # <em>This entry is only for documentation and no real method.</em>
   #
-  # @method _callback_memory_manager_allocate_code_section_callback_(opaque, size, alignment, section_id, section_name)
+  # @method _callback_memory_manager_allocate_code_section_callback_(uint8_t, opaque, size, alignment, section_id, section_name)
+  # @param [Integer] uint8_t
   # @param [FFI::Pointer(*Void)] opaque
   # @param [Integer] size
   # @param [Integer] alignment
@@ -7077,13 +6634,14 @@ module RCGTK::Bindings
   # @param [String] section_name
   # @return [Integer]
   # @scope class
-  callback :memory_manager_allocate_code_section_callback, [:pointer, :ulong, :uint, :uint, :string], :uchar
+  callback :memory_manager_allocate_code_section_callback, [:uchar, :pointer, :ulong, :uint, :uint, :string], :uchar
 
   # (Not documented)
   #
   # <em>This entry is only for documentation and no real method.</em>
   #
-  # @method _callback_memory_manager_allocate_data_section_callback_(opaque, size, alignment, section_id, section_name, is_read_only)
+  # @method _callback_memory_manager_allocate_data_section_callback_(uint8_t, opaque, size, alignment, section_id, section_name, is_read_only)
+  # @param [Integer] uint8_t
   # @param [FFI::Pointer(*Void)] opaque
   # @param [Integer] size
   # @param [Integer] alignment
@@ -7092,28 +6650,21 @@ module RCGTK::Bindings
   # @param [Integer] is_read_only
   # @return [Integer]
   # @scope class
-  callback :memory_manager_allocate_data_section_callback, [:pointer, :ulong, :uint, :uint, :string, :int], :uchar
+  callback :memory_manager_allocate_data_section_callback, [:uchar, :pointer, :ulong, :uint, :uint, :string, :int], :uchar
 
   # (Not documented)
   #
   # <em>This entry is only for documentation and no real method.</em>
   #
-  # @method _callback_memory_manager_finalize_memory_callback_(opaque, err_msg)
+  # @method _callback_memory_manager_finalize_memory_callback_(bool, opaque, err_msg)
+  # @param [Integer] bool
   # @param [FFI::Pointer(*Void)] opaque
   # @param [FFI::Pointer(**CharS)] err_msg
   # @return [Integer]
   # @scope class
-  callback :memory_manager_finalize_memory_callback, [:pointer, :pointer], :int
+  callback :memory_manager_finalize_memory_callback, [:int, :pointer, :pointer], :int
 
-  # Create a simple custom MCJIT memory manager. This memory manager can
-  # intercept allocations in a module-oblivious way. This will return NULL
-  # if any of the passed functions are NULL.
-  #
-  # @param Opaque An opaque client object to pass back to the callbacks.
-  # @param AllocateCodeSection Allocate a block of memory for executable code.
-  # @param AllocateDataSection Allocate a block of memory for data.
-  # @param FinalizeMemory Set page permissions and flush cache. Return 0 on
-  #   success, 1 on error.
+  # (Not documented)
   #
   # @method create_simple_mcjit_memory_manager(opaque, allocate_code_section, allocate_data_section, finalize_memory, destroy)
   # @param [FFI::Pointer(*Void)] opaque
@@ -7163,7 +6714,7 @@ module RCGTK::Bindings
   # @param [OpaquePassRegistry] r
   # @return [nil]
   # @scope class
-  attach_function :initialize_objc_arc_opts, :LLVMInitializeObjCARCOpts, [OpaquePassRegistry], :void
+  attach_function :initialize_obj_carc_opts, :LLVMInitializeObjCARCOpts, [OpaquePassRegistry], :void
 
   # (Not documented)
   #
@@ -7245,21 +6796,20 @@ module RCGTK::Bindings
   # <em>This entry is only for documentation and no real method. The FFI::Enum can be accessed via #enum_type(:linker_mode).</em>
   #
   # === Options:
-  # :linker_destroy_source ::
+  # :destroy_source ::
   #
+  # :preserve_source ::
+  #   Allow source module to be destroyed.
   #
   # @method _enum_linker_mode_
   # @return [Symbol]
   # @scope class
   enum :linker_mode, [
-    :linker_destroy_source, 0
+    :destroy_source, 0,
+    :preserve_source, 1
   ]
 
-  # Links the source module into the destination module, taking ownership
-  # of the source module away from the caller. Optionally returns a
-  # human-readable description of any errors that occurred in linking.
-  # OutMessage must be disposed with LLVMDisposeMessage. The return value
-  # is true if an error occurred, false otherwise.
+  # (Not documented)
   #
   # @method link_modules(dest, src, mode, out_message)
   # @param [OpaqueModule] dest
@@ -7270,7 +6820,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :link_modules, :LLVMLinkModules, [OpaqueModule, OpaqueModule, :linker_mode, :pointer], :int
 
-  # /// This should map exactly onto the C++ enumerator LTOStatus.
+  # This should map exactly onto the C++ enumerator LTOStatus.
   #
   # <em>This entry is only for documentation and no real method. The FFI::Enum can be accessed via #enum_type(:llvm_lto_status).</em>
   #
@@ -7294,7 +6844,7 @@ module RCGTK::Bindings
   # :asm_failure ::
   #
   # :null_object ::
-  #   //  Added C-specific error codes
+  #   Added C-specific error codes
   #
   # @method _enum_llvm_lto_status_
   # @return [Symbol]
@@ -7312,7 +6862,7 @@ module RCGTK::Bindings
     :null_object, 9
   ]
 
-  # /// extern "C" helps, because dlopen() interface uses name to find the symbol.
+  # (Not documented)
   #
   # @method llvm_create_optimizer()
   # @return [FFI::Pointer(LlvmLtoT)]
@@ -7365,7 +6915,7 @@ module RCGTK::Bindings
     layout :dummy, :char
   end
 
-  # // ObjectFile creation
+  # (Not documented)
   #
   # @method create_object_file(mem_buf)
   # @param [OpaqueMemoryBuffer] mem_buf
@@ -7381,7 +6931,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :dispose_object_file, :LLVMDisposeObjectFile, [OpaqueObjectFile], :void
 
-  # // ObjectFile Section iterators
+  # (Not documented)
   #
   # @method get_sections(object_file)
   # @param [OpaqueObjectFile] object_file
@@ -7423,7 +6973,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :move_to_containing_section, :LLVMMoveToContainingSection, [OpaqueSectionIterator, OpaqueSymbolIterator], :void
 
-  # // ObjectFile Symbol iterators
+  # (Not documented)
   #
   # @method get_symbols(object_file)
   # @param [OpaqueObjectFile] object_file
@@ -7456,7 +7006,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :move_to_next_symbol, :LLVMMoveToNextSymbol, [OpaqueSymbolIterator], :void
 
-  # // SectionRef accessors
+  # (Not documented)
   #
   # @method get_section_name(si)
   # @param [OpaqueSectionIterator] si
@@ -7497,7 +7047,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_section_contains_symbol, :LLVMGetSectionContainsSymbol, [OpaqueSectionIterator, OpaqueSymbolIterator], :int
 
-  # // Section Relocation iterators
+  # (Not documented)
   #
   # @method get_relocations(section)
   # @param [OpaqueSectionIterator] section
@@ -7530,7 +7080,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :move_to_next_relocation, :LLVMMoveToNextRelocation, [OpaqueRelocationIterator], :void
 
-  # // SymbolRef accessors
+  # (Not documented)
   #
   # @method get_symbol_name(si)
   # @param [OpaqueSymbolIterator] si
@@ -7548,21 +7098,13 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
-  # @method get_symbol_file_offset(si)
-  # @param [OpaqueSymbolIterator] si
-  # @return [Integer]
-  # @scope class
-  attach_function :get_symbol_file_offset, :LLVMGetSymbolFileOffset, [OpaqueSymbolIterator], :ulong
-
-  # (Not documented)
-  #
   # @method get_symbol_size(si)
   # @param [OpaqueSymbolIterator] si
   # @return [Integer]
   # @scope class
   attach_function :get_symbol_size, :LLVMGetSymbolSize, [OpaqueSymbolIterator], :ulong
 
-  # // RelocationRef accessors
+  # (Not documented)
   #
   # @method get_relocation_address(ri)
   # @param [OpaqueRelocationIterator] ri
@@ -7594,7 +7136,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :get_relocation_type, :LLVMGetRelocationType, [OpaqueRelocationIterator], :ulong
 
-  # // following functions.
+  # (Not documented)
   #
   # @method get_relocation_type_name(ri)
   # @param [OpaqueRelocationIterator] ri
@@ -7612,21 +7154,13 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
-  # @method load_library_permanently(filename)
-  # @param [String] filename
-  # @return [Integer]
-  # @scope class
-  attach_function :load_library_permanently, :LLVMLoadLibraryPermanently, [:string], :int
-
-  # (Not documented)
-  #
   # @method add_argument_promotion_pass(pm)
   # @param [OpaquePassManager] pm
   # @return [nil]
   # @scope class
   attach_function :add_argument_promotion_pass, :LLVMAddArgumentPromotionPass, [OpaquePassManager], :void
 
-  # See llvm::createConstantMergePass function.
+  # (Not documented)
   #
   # @method add_constant_merge_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7634,7 +7168,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_constant_merge_pass, :LLVMAddConstantMergePass, [OpaquePassManager], :void
 
-  # See llvm::createDeadArgEliminationPass function.
+  # (Not documented)
   #
   # @method add_dead_arg_elimination_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7642,7 +7176,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_dead_arg_elimination_pass, :LLVMAddDeadArgEliminationPass, [OpaquePassManager], :void
 
-  # See llvm::createFunctionAttrsPass function.
+  # (Not documented)
   #
   # @method add_function_attrs_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7650,7 +7184,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_function_attrs_pass, :LLVMAddFunctionAttrsPass, [OpaquePassManager], :void
 
-  # See llvm::createFunctionInliningPass function.
+  # (Not documented)
   #
   # @method add_function_inlining_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7658,7 +7192,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_function_inlining_pass, :LLVMAddFunctionInliningPass, [OpaquePassManager], :void
 
-  # See llvm::createAlwaysInlinerPass function.
+  # (Not documented)
   #
   # @method add_always_inliner_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7666,7 +7200,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_always_inliner_pass, :LLVMAddAlwaysInlinerPass, [OpaquePassManager], :void
 
-  # See llvm::createGlobalDCEPass function.
+  # (Not documented)
   #
   # @method add_global_dce_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7674,7 +7208,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_global_dce_pass, :LLVMAddGlobalDCEPass, [OpaquePassManager], :void
 
-  # See llvm::createGlobalOptimizerPass function.
+  # (Not documented)
   #
   # @method add_global_optimizer_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7682,7 +7216,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_global_optimizer_pass, :LLVMAddGlobalOptimizerPass, [OpaquePassManager], :void
 
-  # See llvm::createIPConstantPropagationPass function.
+  # (Not documented)
   #
   # @method add_ip_constant_propagation_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7690,7 +7224,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_ip_constant_propagation_pass, :LLVMAddIPConstantPropagationPass, [OpaquePassManager], :void
 
-  # See llvm::createPruneEHPass function.
+  # (Not documented)
   #
   # @method add_prune_eh_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7698,7 +7232,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_prune_eh_pass, :LLVMAddPruneEHPass, [OpaquePassManager], :void
 
-  # See llvm::createIPSCCPPass function.
+  # (Not documented)
   #
   # @method add_ipsccp_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7706,7 +7240,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_ipsccp_pass, :LLVMAddIPSCCPPass, [OpaquePassManager], :void
 
-  # See llvm::createInternalizePass function.
+  # (Not documented)
   #
   # @method add_internalize_pass(opaque_pass_manager, all_but_main)
   # @param [OpaquePassManager] opaque_pass_manager
@@ -7715,7 +7249,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_internalize_pass, :LLVMAddInternalizePass, [OpaquePassManager, :uint], :void
 
-  # See llvm::createStripDeadPrototypesPass function.
+  # (Not documented)
   #
   # @method add_strip_dead_prototypes_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7723,7 +7257,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_strip_dead_prototypes_pass, :LLVMAddStripDeadPrototypesPass, [OpaquePassManager], :void
 
-  # See llvm::createStripSymbolsPass function.
+  # (Not documented)
   #
   # @method add_strip_symbols_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7760,7 +7294,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pass_manager_builder_set_opt_level, :LLVMPassManagerBuilderSetOptLevel, [OpaquePassManagerBuilder, :uint], :void
 
-  # See llvm::PassManagerBuilder::SizeLevel.
+  # (Not documented)
   #
   # @method pass_manager_builder_set_size_level(pmb, size_level)
   # @param [OpaquePassManagerBuilder] pmb
@@ -7769,7 +7303,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pass_manager_builder_set_size_level, :LLVMPassManagerBuilderSetSizeLevel, [OpaquePassManagerBuilder, :uint], :void
 
-  # See llvm::PassManagerBuilder::DisableUnitAtATime.
+  # (Not documented)
   #
   # @method pass_manager_builder_set_disable_unit_at_a_time(pmb, value)
   # @param [OpaquePassManagerBuilder] pmb
@@ -7778,7 +7312,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pass_manager_builder_set_disable_unit_at_a_time, :LLVMPassManagerBuilderSetDisableUnitAtATime, [OpaquePassManagerBuilder, :int], :void
 
-  # See llvm::PassManagerBuilder::DisableUnrollLoops.
+  # (Not documented)
   #
   # @method pass_manager_builder_set_disable_unroll_loops(pmb, value)
   # @param [OpaquePassManagerBuilder] pmb
@@ -7787,7 +7321,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pass_manager_builder_set_disable_unroll_loops, :LLVMPassManagerBuilderSetDisableUnrollLoops, [OpaquePassManagerBuilder, :int], :void
 
-  # See llvm::PassManagerBuilder::DisableSimplifyLibCalls
+  # (Not documented)
   #
   # @method pass_manager_builder_set_disable_simplify_lib_calls(pmb, value)
   # @param [OpaquePassManagerBuilder] pmb
@@ -7796,7 +7330,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pass_manager_builder_set_disable_simplify_lib_calls, :LLVMPassManagerBuilderSetDisableSimplifyLibCalls, [OpaquePassManagerBuilder, :int], :void
 
-  # See llvm::PassManagerBuilder::Inliner.
+  # (Not documented)
   #
   # @method pass_manager_builder_use_inliner_with_threshold(pmb, threshold)
   # @param [OpaquePassManagerBuilder] pmb
@@ -7805,7 +7339,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pass_manager_builder_use_inliner_with_threshold, :LLVMPassManagerBuilderUseInlinerWithThreshold, [OpaquePassManagerBuilder, :uint], :void
 
-  # See llvm::PassManagerBuilder::populateFunctionPassManager.
+  # (Not documented)
   #
   # @method pass_manager_builder_populate_function_pass_manager(pmb, pm)
   # @param [OpaquePassManagerBuilder] pmb
@@ -7814,7 +7348,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pass_manager_builder_populate_function_pass_manager, :LLVMPassManagerBuilderPopulateFunctionPassManager, [OpaquePassManagerBuilder, OpaquePassManager], :void
 
-  # See llvm::PassManagerBuilder::populateModulePassManager.
+  # (Not documented)
   #
   # @method pass_manager_builder_populate_module_pass_manager(pmb, pm)
   # @param [OpaquePassManagerBuilder] pmb
@@ -7823,7 +7357,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :pass_manager_builder_populate_module_pass_manager, :LLVMPassManagerBuilderPopulateModulePassManager, [OpaquePassManagerBuilder, OpaquePassManager], :void
 
-  # See llvm::PassManagerBuilder::populateLTOPassManager.
+  # (Not documented)
   #
   # @method pass_manager_builder_populate_lto_pass_manager(pmb, pm, internalize, run_inliner)
   # @param [OpaquePassManagerBuilder] pmb
@@ -7842,7 +7376,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_aggressive_dce_pass, :LLVMAddAggressiveDCEPass, [OpaquePassManager], :void
 
-  # See llvm::createCFGSimplificationPass function.
+  # (Not documented)
   #
   # @method add_cfg_simplification_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7850,7 +7384,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_cfg_simplification_pass, :LLVMAddCFGSimplificationPass, [OpaquePassManager], :void
 
-  # See llvm::createDeadStoreEliminationPass function.
+  # (Not documented)
   #
   # @method add_dead_store_elimination_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7858,7 +7392,23 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_dead_store_elimination_pass, :LLVMAddDeadStoreEliminationPass, [OpaquePassManager], :void
 
-  # See llvm::createGVNPass function.
+  # (Not documented)
+  #
+  # @method add_scalarizer_pass(pm)
+  # @param [OpaquePassManager] pm
+  # @return [nil]
+  # @scope class
+  attach_function :add_scalarizer_pass, :LLVMAddScalarizerPass, [OpaquePassManager], :void
+
+  # (Not documented)
+  #
+  # @method add_merged_load_store_motion_pass(pm)
+  # @param [OpaquePassManager] pm
+  # @return [nil]
+  # @scope class
+  attach_function :add_merged_load_store_motion_pass, :LLVMAddMergedLoadStoreMotionPass, [OpaquePassManager], :void
+
+  # (Not documented)
   #
   # @method add_gvn_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7866,7 +7416,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_gvn_pass, :LLVMAddGVNPass, [OpaquePassManager], :void
 
-  # See llvm::createIndVarSimplifyPass function.
+  # (Not documented)
   #
   # @method add_ind_var_simplify_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7874,7 +7424,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_ind_var_simplify_pass, :LLVMAddIndVarSimplifyPass, [OpaquePassManager], :void
 
-  # See llvm::createInstructionCombiningPass function.
+  # (Not documented)
   #
   # @method add_instruction_combining_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7882,7 +7432,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_instruction_combining_pass, :LLVMAddInstructionCombiningPass, [OpaquePassManager], :void
 
-  # See llvm::createJumpThreadingPass function.
+  # (Not documented)
   #
   # @method add_jump_threading_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7890,7 +7440,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_jump_threading_pass, :LLVMAddJumpThreadingPass, [OpaquePassManager], :void
 
-  # See llvm::createLICMPass function.
+  # (Not documented)
   #
   # @method add_licm_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7898,7 +7448,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_licm_pass, :LLVMAddLICMPass, [OpaquePassManager], :void
 
-  # See llvm::createLoopDeletionPass function.
+  # (Not documented)
   #
   # @method add_loop_deletion_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7906,7 +7456,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_loop_deletion_pass, :LLVMAddLoopDeletionPass, [OpaquePassManager], :void
 
-  # See llvm::createLoopIdiomPass function
+  # (Not documented)
   #
   # @method add_loop_idiom_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7914,7 +7464,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_loop_idiom_pass, :LLVMAddLoopIdiomPass, [OpaquePassManager], :void
 
-  # See llvm::createLoopRotatePass function.
+  # (Not documented)
   #
   # @method add_loop_rotate_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7922,7 +7472,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_loop_rotate_pass, :LLVMAddLoopRotatePass, [OpaquePassManager], :void
 
-  # See llvm::createLoopRerollPass function.
+  # (Not documented)
   #
   # @method add_loop_reroll_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7930,7 +7480,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_loop_reroll_pass, :LLVMAddLoopRerollPass, [OpaquePassManager], :void
 
-  # See llvm::createLoopUnrollPass function.
+  # (Not documented)
   #
   # @method add_loop_unroll_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7938,7 +7488,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_loop_unroll_pass, :LLVMAddLoopUnrollPass, [OpaquePassManager], :void
 
-  # See llvm::createLoopUnswitchPass function.
+  # (Not documented)
   #
   # @method add_loop_unswitch_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7946,7 +7496,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_loop_unswitch_pass, :LLVMAddLoopUnswitchPass, [OpaquePassManager], :void
 
-  # See llvm::createMemCpyOptPass function.
+  # (Not documented)
   #
   # @method add_mem_cpy_opt_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7954,7 +7504,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_mem_cpy_opt_pass, :LLVMAddMemCpyOptPass, [OpaquePassManager], :void
 
-  # See llvm::createPartiallyInlineLibCallsPass function.
+  # (Not documented)
   #
   # @method add_partially_inline_lib_calls_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7962,7 +7512,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_partially_inline_lib_calls_pass, :LLVMAddPartiallyInlineLibCallsPass, [OpaquePassManager], :void
 
-  # See llvm::createPromoteMemoryToRegisterPass function.
+  # (Not documented)
   #
   # @method add_promote_memory_to_register_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7970,7 +7520,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_promote_memory_to_register_pass, :LLVMAddPromoteMemoryToRegisterPass, [OpaquePassManager], :void
 
-  # See llvm::createReassociatePass function.
+  # (Not documented)
   #
   # @method add_reassociate_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7978,7 +7528,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_reassociate_pass, :LLVMAddReassociatePass, [OpaquePassManager], :void
 
-  # See llvm::createSCCPPass function.
+  # (Not documented)
   #
   # @method add_sccp_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7986,7 +7536,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_sccp_pass, :LLVMAddSCCPPass, [OpaquePassManager], :void
 
-  # See llvm::createScalarReplAggregatesPass function.
+  # (Not documented)
   #
   # @method add_scalar_repl_aggregates_pass(pm)
   # @param [OpaquePassManager] pm
@@ -7994,7 +7544,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_scalar_repl_aggregates_pass, :LLVMAddScalarReplAggregatesPass, [OpaquePassManager], :void
 
-  # See llvm::createScalarReplAggregatesPass function.
+  # (Not documented)
   #
   # @method add_scalar_repl_aggregates_pass_ssa(pm)
   # @param [OpaquePassManager] pm
@@ -8002,7 +7552,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_scalar_repl_aggregates_pass_ssa, :LLVMAddScalarReplAggregatesPassSSA, [OpaquePassManager], :void
 
-  # See llvm::createScalarReplAggregatesPass function.
+  # (Not documented)
   #
   # @method add_scalar_repl_aggregates_pass_with_threshold(pm, threshold)
   # @param [OpaquePassManager] pm
@@ -8011,7 +7561,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_scalar_repl_aggregates_pass_with_threshold, :LLVMAddScalarReplAggregatesPassWithThreshold, [OpaquePassManager, :int], :void
 
-  # See llvm::createSimplifyLibCallsPass function.
+  # (Not documented)
   #
   # @method add_simplify_lib_calls_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8019,7 +7569,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_simplify_lib_calls_pass, :LLVMAddSimplifyLibCallsPass, [OpaquePassManager], :void
 
-  # See llvm::createTailCallEliminationPass function.
+  # (Not documented)
   #
   # @method add_tail_call_elimination_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8027,7 +7577,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_tail_call_elimination_pass, :LLVMAddTailCallEliminationPass, [OpaquePassManager], :void
 
-  # See llvm::createConstantPropagationPass function.
+  # (Not documented)
   #
   # @method add_constant_propagation_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8035,7 +7585,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_constant_propagation_pass, :LLVMAddConstantPropagationPass, [OpaquePassManager], :void
 
-  # See llvm::demotePromoteMemoryToRegisterPass function.
+  # (Not documented)
   #
   # @method add_demote_memory_to_register_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8043,7 +7593,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_demote_memory_to_register_pass, :LLVMAddDemoteMemoryToRegisterPass, [OpaquePassManager], :void
 
-  # See llvm::createVerifierPass function.
+  # (Not documented)
   #
   # @method add_verifier_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8051,7 +7601,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_verifier_pass, :LLVMAddVerifierPass, [OpaquePassManager], :void
 
-  # See llvm::createCorrelatedValuePropagationPass function
+  # (Not documented)
   #
   # @method add_correlated_value_propagation_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8059,7 +7609,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_correlated_value_propagation_pass, :LLVMAddCorrelatedValuePropagationPass, [OpaquePassManager], :void
 
-  # See llvm::createEarlyCSEPass function
+  # (Not documented)
   #
   # @method add_early_cse_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8067,7 +7617,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_early_cse_pass, :LLVMAddEarlyCSEPass, [OpaquePassManager], :void
 
-  # See llvm::createLowerExpectIntrinsicPass function
+  # (Not documented)
   #
   # @method add_lower_expect_intrinsic_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8075,7 +7625,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_lower_expect_intrinsic_pass, :LLVMAddLowerExpectIntrinsicPass, [OpaquePassManager], :void
 
-  # See llvm::createTypeBasedAliasAnalysisPass function
+  # (Not documented)
   #
   # @method add_type_based_alias_analysis_pass(pm)
   # @param [OpaquePassManager] pm
@@ -8083,7 +7633,7 @@ module RCGTK::Bindings
   # @scope class
   attach_function :add_type_based_alias_analysis_pass, :LLVMAddTypeBasedAliasAnalysisPass, [OpaquePassManager], :void
 
-  # See llvm::createBasicAliasAnalysisPass function
+  # (Not documented)
   #
   # @method add_basic_alias_analysis_pass(pm)
   # @param [OpaquePassManager] pm
