@@ -1,22 +1,22 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/04/07
-# Description:	This file defines the BasicBlock class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/04/07
+# Description: This file defines the BasicBlock class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
-require 'rltk/cg/context'
-require 'rltk/cg/value'
+require 'rcgtk/bindings'
+require 'rcgtk/context'
+require 'rcgtk/value'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# A BasicBlock is what instructions are inserted into and what functions
 	# are made of.  BasicBlock objects may be created either using
@@ -34,11 +34,11 @@ module RLTK::CG
 		#
 		# @param [FFI::Pointer, Function, BasicBlock] overloaded Overloaded paramater that determines creation behaviour.
 		#
-		# @param [String]		name			Name of this BasicBlock.
-		# @param [Builder, nil]	builder		Builder to be used by {#build}.
-		# @param [Context, nil]	context		Context in which to create the block.
-		# @param [Array<Object>]	block_args	Arguments to be passed when block is invoked.
-		# @param [Proc]		block		Block to be invoked by {#build}.
+		# @param [String]        name       Name of this BasicBlock.
+		# @param [Builder, nil]  builder    Builder to be used by {#build}.
+		# @param [Context, nil]  context    Context in which to create the block.
+		# @param [Array<Object>] block_args Arguments to be passed when block is invoked.
+		# @param [Proc]          block      Block to be invoked by {#build}.
 		def initialize(overloaded, name = '', builder = nil, context = nil, *block_args, &block)
 			check_type(context, Context, 'context') if context
 
@@ -77,9 +77,9 @@ module RLTK::CG
 		#          ret add(fun.params[0], fun.params[1])
 		#     end
 		#
-		# @param [Builder, nil]	builder		Builder in which to execute this block.
-		# @param [Array<Object>]	block_args	Arguments to pass into block.
-		# @param [Proc]		block		Block to execute inside builder.
+		# @param [Builder, nil]  builder    Builder in which to execute this block.
+		# @param [Array<Object>] block_args Arguments to pass into block.
+		# @param [Proc]          block      Block to execute inside builder.
 		#
 		# @return [Object] Value the block evaluates to.  Usually an {Instruction}
 		def build(builder = nil, *block_args, &block)
@@ -88,8 +88,8 @@ module RLTK::CG
 
 		# Creates a new BasicBlock inserted immediately before this block.
 		#
-		# @param [String]	name		Name of this BasicBlock.
-		# @param [Context]	context	Context in which to create this BasicBlock.
+		# @param [String]  name    Name of this BasicBlock.
+		# @param [Context] context Context in which to create this BasicBlock.
 		#
 		# @return [BasicBlock]
 		def insert_before(name = '', context = nil)

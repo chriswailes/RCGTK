@@ -1,7 +1,7 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/03/15
-# Description:	This file defines the Support module.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/03/15
+# Description: This file defines the Support module.
 
 ############
 # Requires #

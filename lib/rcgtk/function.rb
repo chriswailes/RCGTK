@@ -1,22 +1,22 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/04/06
-# Description:	This file defines the Function class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/04/06
+# Description: This file defines the Function class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
-require 'rltk/cg/basic_block'
-require 'rltk/cg/value'
+require 'rcgtk/bindings'
+require 'rcgtk/basic_block'
+require 'rcgtk/value'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# An LLVM IR function.
 	class Function < GlobalValue
@@ -27,12 +27,12 @@ module RLTK::CG
 		# {Module::FunctionCollection#add} method to add functions to
 		# modules.
 		#
-		# @param [FFI::Pointer, Module]				overloaded	Pointer to a function objet or a module.
-		# @param [String]							name			Name of the function in LLVM IR.
-		# @param [FunctionType, Array(Type, Array<Type>)]	type_info		FunctionType or Values that will be passed to {FunctionType#initialize}.
-		# @param [Proc]							block		Block to be executed inside the context of the function.
+		# @param [FFI::Pointer, Module]                    overloaded  Pointer to a function objet or a module.
+		# @param [String]                                  name        Name of the function in LLVM IR.
+		# @param [FunctionType, Array(Type, Array<Type>)]  type_info   FunctionType or Values that will be passed to {FunctionType#initialize}.
+		# @param [Proc]                                    block       Block to be executed inside the context of the function.
 		#
-		# @raise [RuntimeError] An error is raised if the overloaded parameter is of an incorrect type.
+		# @raise [RuntimeError]  An error is raised if the overloaded parameter is of an incorrect type.
 		def initialize(overloaded, name = '', *type_info, &block)
 			@ptr =
 			case overloaded
@@ -51,13 +51,13 @@ module RLTK::CG
 			self.instance_exec(self, &block) if block
 		end
 
-		# @return [FunctionAttrCollection] Proxy object for inspecting function attributes.
+		# @return [FunctionAttrCollection]  Proxy object for inspecting function attributes.
 		def attributes
 			@attributes ||= FunctionAttrCollection.new(self)
 		end
 		alias :attrs :attributes
 
-		# @return [BasicBlockCollection] Proxy object for inspecting a function's basic blocks.
+		# @return [BasicBlockCollection]  Proxy object for inspecting a function's basic blocks.
 		def basic_blocks
 			@basic_blocks ||= BasicBlockCollection.new(self)
 		end
@@ -76,14 +76,14 @@ module RLTK::CG
 		#
 		# @see Bindings._enum_call_conv_
 		#
-		# @param [Symbol] conv Calling convention to set.
+		# @param [Symbol]  conv  Calling convention to set.
 		def calling_convention=(conv)
 			Bindings.set_function_call_conv(@ptr, Bindings.enum_type(:call_conv)[conv])
 
 			conv
 		end
 
-		# @return [ParameterCollection] Proxy object for inspecting a function's parameters.
+		# @return [ParameterCollection]  Proxy object for inspecting a function's parameters.
 		def parameters
 			@parameters ||= ParameterCollection.new(self)
 		end
@@ -91,7 +91,7 @@ module RLTK::CG
 
 		# Verify that the function is valid LLVM IR.
 		#
-		# @return [nil, String] Human-readable description of any invalid constructs if invalid.
+		# @return [nil, String]  Human-readable description of any invalid constructs if invalid.
 		def verify
 			do_verification(:return_status)
 		end
@@ -123,13 +123,13 @@ module RLTK::CG
 			# @note The first argument to any proc passed to this function
 			#	will be the function the block is being appended to.
 			#
-			# @param [String]		name			Name of the block in LLVM IR.
-			# @param [Builder, nil]	builder		Builder to be used in evaluating *block*.
-			# @param [Context, nil]	context		Context in which to create the block.
-			# @param [Array<Object>]	block_args	Arguments to be passed to *block*.  The function the block is appended to is automatically added to the front of this list.
-			# @param [Proc]		block		Block to be evaluated using *builder* after positioning it at the end of the new block.
+			# @param [String]         name        Name of the block in LLVM IR.
+			# @param [Builder, nil]   builder     Builder to be used in evaluating *block*.
+			# @param [Context, nil]   context     Context in which to create the block.
+			# @param [Array<Object>]  block_args  Arguments to be passed to *block*.  The function the block is appended to is automatically added to the front of this list.
+			# @param [Proc]           block       Block to be evaluated using *builder* after positioning it at the end of the new block.
 			#
-			# @return [BasicBlock] New BasicBlock.
+			# @return [BasicBlock]  New BasicBlock.
 			def append(name = '', builder = nil, context = nil, *block_args, &block)
 				BasicBlock.new(@fun, name, builder, context, *block_args, &block)
 			end
@@ -138,7 +138,7 @@ module RLTK::CG
 			#
 			# @yieldparam block [BasicBlock]
 			#
-			# @return [Enumerator] Returns an Enumerator if no block is given.
+			# @return [Enumerator]  Returns an Enumerator if no block is given.
 			def each
 				return to_enum :each unless block_given?
 
@@ -150,22 +150,22 @@ module RLTK::CG
 				end
 			end
 
-			# @return [BasicBlock, nil] The function's entry block if it has been added.
+			# @return [BasicBlock, nil]  The function's entry block if it has been added.
 			def entry
 				if (ptr = Bindings.get_entry_basic_block(@fun)) then BasicBlock.new(ptr) else nil end
 			end
 
-			# @return [BasicBlock, nil] The function's first block if one has been added.
+			# @return [BasicBlock, nil]  The function's first block if one has been added.
 			def first
 				if (ptr = Bindings.get_first_basic_block(@fun)) then BasicBlock.new(ptr) else nil end
 			end
 
-			# @return [BasicBlock, nil] The function's last block if one has been added.
+			# @return [BasicBlock, nil]  The function's last block if one has been added.
 			def last
 				if (ptr = Bindings.get_last_basic_block(@fun)) then BasicBlock.new(ptr) else nil end
 			end
 
-			# @return [Integer] Number of basic blocks that comprise this function.
+			# @return [Integer]  Number of basic blocks that comprise this function.
 			def size
 				Bindings.count_basic_blocks(@fun)
 			end
@@ -199,9 +199,9 @@ module RLTK::CG
 
 			# Access the parameter at the given index.
 			#
-			# @param [Integer] index Index of the desired parameter.  May be negative.
+			# @param [Integer]  index  Index of the desired parameter.  May be negative.
 			#
-			# @return [Value] Value object representing the parameter.
+			# @return [Value]  Value object representing the parameter.
 			def [](index)
 				index += self.size if index < 0
 
@@ -214,7 +214,7 @@ module RLTK::CG
 			#
 			# @yieldparam val [Value]
 			#
-			# @return [Enumerator] Returns an Enumerator if no block is given.
+			# @return [Enumerator]  Returns an Enumerator if no block is given.
 			def each
 				return to_enum :each unless block_given?
 
@@ -223,12 +223,12 @@ module RLTK::CG
 				self
 			end
 
-			# @return [Integer] Number of function parameters.
+			# @return [Integer]  Number of function parameters.
 			def size
 				Bindings.count_params(@fun)
 			end
 
-			# @return [Array<Value>] Array of Value objects representing the function parameters.
+			# @return [Array<Value>]  Array of Value objects representing the function parameters.
 			def to_a
 				self.size.times.to_a.inject([]) { |params, index| params << self[index] }
 			end

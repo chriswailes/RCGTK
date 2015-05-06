@@ -1,7 +1,7 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/05/09
-# Description:	This file contains unit tests for the RLTK::CG::Function class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/05/09
+# Description: This file contains unit tests for the RCGTK::Function class.
 
 ############
 # Requires #
@@ -11,24 +11,24 @@
 require 'minitest/autorun'
 
 # Ruby Language Toolkit
-require 'rltk/cg/llvm'
-require 'rltk/cg/module'
-require 'rltk/cg/function'
-require 'rltk/cg/type'
+require 'rcgtk/llvm'
+require 'rcgtk/module'
+require 'rcgtk/function'
+require 'rcgtk/type'
 
 class FunctionTester < Minitest::Test
 	def setup
-		@mod = RLTK::CG::Module.new('Testing Module')
-		@fun = @mod.functions.add('testing_function', RLTK::CG::NativeIntType, [RLTK::CG::NativeIntType, RLTK::CG::NativeIntType])
+		@mod = RCGTK::Module.new('Testing Module')
+		@fun = @mod.functions.add('testing_function', RCGTK::NativeIntType, [RCGTK::NativeIntType, RCGTK::NativeIntType])
 
 		@fun.params[0].name = 'foo'
 		@fun.params[1].name = 'bar'
 	end
 
 	def test_equality
-		fun0 = @mod.functions.add('fun0', RLTK::CG::NativeIntType, [])
-		fun1 = @mod.functions.add('fun0', RLTK::CG::FloatType, [])
-		fun2 = RLTK::CG::Function.new(fun0.ptr)
+		fun0 = @mod.functions.add('fun0', RCGTK::NativeIntType, [])
+		fun1 = @mod.functions.add('fun0', RCGTK::FloatType, [])
+		fun2 = RCGTK::Function.new(fun0.ptr)
 
 		assert_equal(fun0, fun2)
 		refute_equal(fun0, fun1)

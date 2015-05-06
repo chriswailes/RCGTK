@@ -1,20 +1,20 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/03/15
-# Description:	This file defines the PassManager class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/03/15
+# Description: This file defines the PassManager class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
+require 'rcgtk/bindings'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# A PassManager is responsible for scheduling and running optimization
 	# passes on modules.
@@ -82,7 +82,7 @@ module RLTK::CG
 		#
 		# @see Module#pass_manager
 		#
-		# @param [Module] mod Module this pass manager belongs to.
+		# @param [Module]  mod  Module this pass manager belongs to.
 		def initialize(mod)
 			# LLVM Initialization
 			@ptr = Bindings.create_pass_manager
@@ -106,7 +106,7 @@ module RLTK::CG
 		#
 		# @see PASSES
 		#
-		# @param [Array<Symbol>] names Passes to add to the pass manager.
+		# @param [Array<Symbol>]  names  Passes to add to the pass manager.
 		#
 		# @return [PassManager] self
 		def add(*names)
@@ -136,12 +136,12 @@ module RLTK::CG
 		end
 		alias :<< :add
 
-		# @return [Array<Symbol>] List of passes that have been enabled.
+		# @return [Array<Symbol>]  List of passes that have been enabled.
 		def enabled
 			@enabled.clone
 		end
 
-		# @return [Boolean] Weather the pass has been enabled or not.
+		# @return [Boolean]  Whether the pass has been enabled or not.
 		def enabled?(name)
 			@enabled.include?(name) or @enabled.include?(PASSES.key(Bindings.get_bname(name)))
 		end
@@ -155,7 +155,7 @@ module RLTK::CG
 
 		# Set the target data for this pass manager.
 		#
-		# @param [TargetData] data
+		# @param [TargetData]  data
 		#
 		# @return [void]
 		def target_data=(data)
@@ -177,7 +177,7 @@ module RLTK::CG
 		#
 		# @see Module#function_pass_manager
 		#
-		# @param [Module] mod Module this pass manager belongs to.
+		# @param [Module]  mod  Module this pass manager belongs to.
 		def initialize(mod)
 			# LLVM Initialization
 			@ptr = Bindings.create_function_pass_manager_for_module(mod)
@@ -194,7 +194,7 @@ module RLTK::CG
 		# Run the enabled passes on the given function inside the execution
 		# engine's module.
 		#
-		# @param [Function] fun Function to optimize.
+		# @param [Function]  fun  Function to optimize.
 		#
 		# @return [void]
 		def run(fun)

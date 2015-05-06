@@ -1,8 +1,8 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/05/11
-# Description:	This file contains unit tests for the mechanics beind
-#			transformation passes.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/05/11
+# Description: This file contains unit tests for the mechanics beind
+#              transformation passes.
 
 ############
 # Requires #
@@ -12,22 +12,22 @@
 require 'minitest/autorun'
 
 # Ruby Language Toolkit
-require 'rltk/cg/llvm'
-require 'rltk/cg/module'
-require 'rltk/cg/execution_engine'
-require 'rltk/cg/type'
-require 'rltk/cg/value'
+require 'rcgtk/llvm'
+require 'rcgtk/module'
+require 'rcgtk/execution_engine'
+require 'rcgtk/type'
+require 'rcgtk/value'
 
 class TransformTester < Minitest::Test
 	def setup
-		RLTK::CG::LLVM.init(:X86)
+		RCGTK::LLVM.init(:X86)
 
-		@mod = RLTK::CG::Module.new('Testing Module')
-		@jit = RLTK::CG::JITCompiler.new(@mod)
+		@mod = RCGTK::Module.new('Testing Module')
+		@jit = RCGTK::JITCompiler.new(@mod)
 	end
 
 	def test_gdce
-		fn0 = @mod.functions.add('fn0', RLTK::CG::VoidType, []) do |fun|
+		fn0 = @mod.functions.add('fn0', RCGTK::VoidType, []) do |fun|
 			fun.linkage = :internal
 
 			blocks.append do
@@ -35,7 +35,7 @@ class TransformTester < Minitest::Test
 			end
 		end
 
-		fn1 = @mod.functions.add('fn1', RLTK::CG::VoidType, []) do |fun|
+		fn1 = @mod.functions.add('fn1', RCGTK::VoidType, []) do |fun|
 			fun.linkage = :internal
 
 			blocks.append do
@@ -43,7 +43,7 @@ class TransformTester < Minitest::Test
 			end
 		end
 
-		main = @mod.functions.add('main', RLTK::CG::VoidType, []) do
+		main = @mod.functions.add('main', RCGTK::VoidType, []) do
 			blocks.append do
 				call(fn0)
 				ret_void

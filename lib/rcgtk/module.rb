@@ -1,21 +1,21 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/03/20
-# Description:	This file defines the Module class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/03/20
+# Description: This file defines the Module class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
-require 'rltk/cg/context'
+require 'rcgtk/bindings'
+require 'rcgtk/context'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# This class represents a collection of functions, constants, and global
 	# variables.
@@ -78,9 +78,9 @@ module RLTK::CG
 
 		# Create a new LLVM module.
 		#
-		# @param [FFI::Pointer, String]	overloaded	Pointer to existing module or name of new module.
-		# @param [Context, nil]			context		Optional context in which to create the module.
-		# @param [Proc]				block		Block to be executed inside the context of the module.
+		# @param [FFI::Pointer, String]  overloaded  Pointer to existing module or name of new module.
+		# @param [Context, nil]          context     Optional context in which to create the module.
+		# @param [Proc]                  block       Block to be executed inside the context of the module.
 		def initialize(overloaded, context = nil, &block)
 			@ptr =
 			case overloaded
@@ -225,9 +225,9 @@ module RLTK::CG
 
 		# Write the module as LLVM bitcode to a file.
 		#
-		# @param [#path, #fileno, Integer, String] overloaded Where to write the bitcode.
+		# @param [#path, #fileno, Integer, String]  overloaded  Where to write the bitcode.
 		#
-		# @return [Boolean] If the write was successful.
+		# @return [Boolean]  If the write was successful.
 		def write_bitcode(overloaded)
 			0 ==
 			if overloaded.respond_to?(:path)
@@ -246,7 +246,7 @@ module RLTK::CG
 
 		# Verify that the module is valid LLVM IR.
 		#
-		# @return [nil, String] Human-readable description of any invalid constructs if invalid.
+		# @return [nil, String]  Human-readable description of any invalid constructs if invalid.
 		def verify
 			do_verification(:return_status)
 		end
@@ -271,14 +271,14 @@ module RLTK::CG
 		class FunctionCollection
 			include Enumerable
 
-			# @param [Module] mod Module for which this is a proxy.
+			# @param [Module]  mod  Module for which this is a proxy.
 			def initialize(mod)
 				@module = mod
 			end
 
 			# Retreive a Function object.
 			#
-			# @param [String, Symbol, Integer] key Function identifier.  Either the name of the function or its index.
+			# @param [String, Symbol, Integer]  key  Function identifier.  Either the name of the function or its index.
 			#
 			# @return [Function]
 			def [](key)
@@ -293,9 +293,9 @@ module RLTK::CG
 
 			# Add a Function to this module.
 			#
-			# @param [String]							name		Name of the module in LLVM IR.
-			# @param [FunctionType, Array(Type, Array<Type>)]	type_info	FunctionType or Values that will be passed to {FunctionType#initialize}.
-			# @param [Proc]							block	Block to be executed inside the context of the function.
+			# @param [String]                                  name       Name of the module in LLVM IR.
+			# @param [FunctionType, Array(Type, Array<Type>)]  type_info  FunctionType or Values that will be passed to {FunctionType#initialize}.
+			# @param [Proc]                                    block      Block to be executed inside the context of the function.
 			#
 			# @return [Function]
 			def add(name, *type_info, &block)
@@ -304,7 +304,7 @@ module RLTK::CG
 
 			# Remove a function from the module.
 			#
-			# @param [Function] fun Function to remove.
+			# @param [Function]  fun  Function to remove.
 			#
 			# @return [void]
 			def delete(fun)
@@ -315,7 +315,7 @@ module RLTK::CG
 			#
 			# @yieldparam fun [Function]
 			#
-			# @return [Enumerator] Returns an Enumerator if no block is given.
+			# @return [Enumerator]  Returns an Enumerator if no block is given.
 			def each
 				return to_enum(:each) unless block_given?
 
@@ -327,33 +327,33 @@ module RLTK::CG
 				end
 			end
 
-			# @return [Function, nil] The module's first function if one has been added.
+			# @return [Function, nil]  The module's first function if one has been added.
 			def first
 				if (ptr = Bindings.get_first_function(@module)).null? then nil else Function.new(ptr) end
 			end
 
-			# @return [Function, nil] The module's last function if one has been added.
+			# @return [Function, nil]  The module's last function if one has been added.
 			def last
 				if (ptr = Bindings.get_last_function(@module)).null? then nil else Function.new(ptr) end
 			end
 
-			# @param [String, Symbol] name Name of the desired function.
+			# @param [String, Symbol]  name  Name of the desired function.
 			#
-			# @return [Function, nil] The function with the given name.
+			# @return [Function, nil]  The function with the given name.
 			def named(name)
 				if (ptr = Bindings.get_named_function(@module, name)).null? then nil else Function.new(ptr) end
 			end
 
-			# @param [Function] fun Function you want the successor for.
+			# @param [Function]  fun  Function you want the successor for.
 			#
-			# @return [Function, nil] Next function in the collection.
+			# @return [Function, nil]  Next function in the collection.
 			def next(fun)
 				if (ptr = Bindings.get_next_function(fun)).null? then nil else Function.new(ptr) end
 			end
 
-			# @param [Function] fun Function you want the predecessor for.
+			# @param [Function]  fun  Function you want the predecessor for.
 			#
-			# @return [Function, nil] Previous function in the collection.
+			# @return [Function, nil]  Previous function in the collection.
 			def previous(fun)
 				if (ptr = Bindings.get_previous_function(fun)).null? then nil else Function.new(ptr) end
 			end
@@ -363,14 +363,14 @@ module RLTK::CG
 		class GlobalCollection
 			include Enumerable
 
-			# @param [Module] mod Module for which this is a proxy.
+			# @param [Module]  mod  Module for which this is a proxy.
 			def initialize(mod)
 				@module = mod
 			end
 
 			# Retreive a GlobalVariable object.
 			#
-			# @param [String, Symbol, Integer] key Global variable identifier.  Either the name of the variable or its index.
+			# @param [String, Symbol, Integer]  key  Global variable identifier.  Either the name of the variable or its index.
 			#
 			# @return [GlobalVariable]
 			def [](key)
@@ -385,15 +385,15 @@ module RLTK::CG
 
 			# Add a global variable to a module.
 			#
-			# @param [Type]	type	Type of the global variable.
-			# @param [String]	name	Name of the global variable in LLVM IR.
+			# @param [Type]    type  Type of the global variable.
+			# @param [String]  name  Name of the global variable in LLVM IR.
 			def add(type, name)
 				GlobalVariable.new(Bindings.add_global(@module, type, name))
 			end
 
 			# Remove a global variable from the module.
 			#
-			# @param [GlobalVariable] global Global variable to remove.
+			# @param [GlobalVariable]  global  Global variable to remove.
 			#
 			# @return [void]
 			def delete(global)
@@ -416,33 +416,33 @@ module RLTK::CG
 				end
 			end
 
-			# @return [GlobalVariable, nil] The module's first global variable if one has been added.
+			# @return [GlobalVariable, nil]  The module's first global variable if one has been added.
 			def first
 				if (ptr = Bindings.get_first_global(@module)).null? then nil else GlobalValue.new(ptr) end
 			end
 
-			# @return [GlobalVariable, nil] The module's last global variable if one has been added.
+			# @return [GlobalVariable, nil]  The module's last global variable if one has been added.
 			def last
 				if (ptr = Bindings.get_last_global(@module)).null? then nil else GlobalValue.new(ptr) end
 			end
 
-			# @param [String, Symbol] name Name of the desired global variable.
+			# @param [String, Symbol]  name  Name of the desired global variable.
 			#
-			# @return [GlobalVariable, nil] The global variable with the given name.
+			# @return [GlobalVariable, nil]  The global variable with the given name.
 			def named(name)
 				if (ptr = Bindings.get_named_global(@module, name)).null? then nil else GlobalValue.new(ptr) end
 			end
 
-			# @param [GlobalVariable] global Global variable you want the successor for.
+			# @param [GlobalVariable]  global  Global variable you want the successor for.
 			#
-			# @return [GlobalVariable, nil] global Next global variable in the collection.
+			# @return [GlobalVariable, nil]  Next global variable in the collection.
 			def next(global)
 				if (ptr = Bindings.get_next_global(global)).null? then nil else GlobalValue.new(ptr) end
 			end
 
-			# @param [GlobalVariable] global Global variable you want the predecessor for.
+			# @param [GlobalVariable]  global  Global variable you want the predecessor for.
 			#
-			# @return [GlobalVariable, nil] Previous global variable in the collection.
+			# @return [GlobalVariable, nil]  Previous global variable in the collection.
 			def previous(global)
 				if (ptr = Bindings.get_previous_global(global)).null? then nil else GlobalValue.new(ptr) end
 			end

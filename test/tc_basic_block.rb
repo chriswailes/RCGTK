@@ -1,8 +1,8 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/05/13
-# Description:	This file contains unit tests for the RLTK::CG::BasicBlock
-#			class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/05/13
+# Description: This file contains unit tests for the RCGTK::BasicBlock
+#              class.
 
 ############
 # Requires #
@@ -12,18 +12,18 @@
 require 'minitest/autorun'
 
 # Ruby Language Toolkit
-require 'rltk/cg/llvm'
-require 'rltk/cg/module'
+require 'rcgtk/llvm'
+require 'rcgtk/module'
 
 class BasicBlockTester < Minitest::Test
 	def setup
-		RLTK::CG::LLVM.init(:X86)
+		RCGTK::LLVM.init(:X86)
 
-		@mod = RLTK::CG::Module.new('Testing Module')
+		@mod = RCGTK::Module.new('Testing Module')
 	end
 
 	def test_basic_block
-		fun = @mod.functions.add('basic_block_tester', RLTK::CG::VoidType, [])
+		fun = @mod.functions.add('basic_block_tester', RCGTK::VoidType, [])
 		bb0 = fun.blocks.append
 		bb1 = fun.blocks.append
 
@@ -41,10 +41,10 @@ class BasicBlockTester < Minitest::Test
 	end
 
 	def test_basic_block_collection
-		fun = @mod.functions.add('basic_block_collection_tester', RLTK::CG::VoidType, [])
+		fun = @mod.functions.add('basic_block_collection_tester', RCGTK::VoidType, [])
 		bb0 = fun.blocks.append
 
-		assert_instance_of(RLTK::CG::BasicBlock, bb0)
+		assert_instance_of(RCGTK::BasicBlock, bb0)
 
 		assert_equal(1, fun.blocks.size)
 		assert_equal(fun.blocks.first, fun.blocks.last)
@@ -64,14 +64,14 @@ class BasicBlockTester < Minitest::Test
 	end
 
 	def test_basic_block_enumeration
-		fun = @mod.functions.add('basic_block_enumeration_tester', RLTK::CG::DoubleType, [RLTK::CG::DoubleType])
+		fun = @mod.functions.add('basic_block_enumeration_tester', RCGTK::DoubleType, [RCGTK::DoubleType])
 		bb0 = fun.blocks.append
 
 		[bb0.instructions.each.to_a, bb0.instructions.to_a].each do |insts|
 			assert_equal(0, insts.size)
 		end
 
-		bb0.build { ret(fadd(fun.params[0], RLTK::CG::Double.new(1.0))) }
+		bb0.build { ret(fadd(fun.params[0], RCGTK::Double.new(1.0))) }
 
 		[bb0.instructions.each.to_a, bb0.instructions.to_a].each do |insts|
 			assert_equal(2, insts.size)

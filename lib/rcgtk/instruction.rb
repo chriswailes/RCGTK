@@ -1,21 +1,21 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/04/09
-# Description:	This file defines LLVM Instruction classes.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/04/09
+# Description: This file defines LLVM Instruction classes.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
-require 'rltk/cg/value'
+require 'rcgtk/bindings'
+require 'rcgtk/value'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# This class represents LLVM IR instructions.
 	class Instruction < User
@@ -60,9 +60,9 @@ module RLTK::CG
 		# of the instruction is tested and the appropriate sub-type is picked
 		# if possible.  If not, a generic Instruction object is returned.
 		#
-		# @param [FFI::Pointer] ptr Pointer to a C instruction object.
+		# @param [FFI::Pointer]  ptr  Pointer to a C instruction object.
 		#
-		# @return [Instruction] An Instruction or one of its sub-types.
+		# @return [Instruction]  An Instruction or one of its sub-types.
 		def self.from_ptr(ptr)
 			match = nil
 
@@ -84,22 +84,22 @@ module RLTK::CG
 		# You should never instantiate Instruction object directly.  Use the
 		# builder class to add new instructions.
 		#
-		# @param [FFI::Pointer] ptr Pointer to a C instruction object.
+		# @param [FFI::Pointer]  ptr  Pointer to a C instruction object.
 		def initialize(ptr)
 			@ptr = check_type(ptr, FFI::Pointer, 'ptr')
 		end
 
-		# @return [Instruction, nil] Instruction that follows the current one in a {BasicBlock}.
+		# @return [Instruction, nil]  Instruction that follows the current one in a {BasicBlock}.
 		def next
 			if (ptr = Bindings.get_next_instruction(@ptr)).null? then nil else Instruction.from_ptr(ptr) end
 		end
 
-		# @return [BasicBlock] BasicBlock that contains this Instruction.
+		# @return [BasicBlock]  BasicBlock that contains this Instruction.
 		def parent
 			if (ptr = Bindings.get_instruction_parent(@ptr)).null? then nil else BasicBlock.new(ptr) end
 		end
 
-		# @return [Instruction, nil] Instruction that precedes the current on in a {BasicBlock}.
+		# @return [Instruction, nil]  Instruction that precedes the current on in a {BasicBlock}.
 		def previous
 			if (ptr = Bindings.get_previous_instruction(@ptr)).null? then nil else Instruction.from_ptr(ptr) end
 		end
@@ -108,8 +108,8 @@ module RLTK::CG
 		# Instruction Testing Method Definitions #
 		##########################################
 
-		selector	= Regexp.new(/LLVMIsA.*Inst/)
-		syms		= Symbol.all_symbols.select { |sym| selector.match(sym.to_s) }
+		selector = Regexp.new(/LLVMIsA.*Inst/)
+		syms     = Symbol.all_symbols.select { |sym| selector.match(sym.to_s) }
 
 		syms.each do |sym|
 			sym = (Bindings.get_bname(sym).to_s + '?').to_sym
@@ -137,7 +137,7 @@ module RLTK::CG
 		#
 		# @see Bindings._enum_call_conv_
 		#
-		# @param [Symbol] conv Calling convention to set.
+		# @param [Symbol]  conv  Calling convention to set.
 		def calling_convention=(conv)
 			Bindings.set_instruction_call_conv(@ptr, Bindings.enum_type(:call_conv)[conv])
 
@@ -164,7 +164,7 @@ module RLTK::CG
 	# @see http://en.wikipedia.org/wiki/Static_single_assignment_form
 	# @LLVMInst phi
 	class PhiInst < Instruction
-		# @return [IncomingCollection] Proxy object for inspecting the incoming {BasicBlock}/{Value} pairs.
+		# @return [IncomingCollection]  Proxy object for inspecting the incoming {BasicBlock}/{Value} pairs.
 		def incoming
 			@incoming_collection ||= IncomingCollection.new(self)
 		end
@@ -173,14 +173,14 @@ module RLTK::CG
 		class IncomingCollection
 			include Enumerable
 
-			# @param [PhiInst] phi Phi instruction for which this is a proxy.
+			# @param [PhiInst]  phi  Phi instruction for which this is a proxy.
 			def initialize(phi)
 				@phi = phi
 			end
 
 			# Access the {BasicBlock}/{Value} pair at the given index.
 			#
-			# @param [Integer] index Index of the desired pair.  May be negative.
+			# @param [Integer]  index  Index of the desired pair.  May be negative.
 			#
 			# @return [Array(BasicBlock, Value)]
 			def [](index)
@@ -199,8 +199,8 @@ module RLTK::CG
 			# @example Adding several block/value pairs:
 			#    phi.incoming.add({bb0 => val0, bb1 => val1})
 			#
-			# @param [BasicBlock, Hash{BasicBlock => Value}]	overloaded
-			# @param [Value, nil]						value
+			# @param [BasicBlock, Hash{BasicBlock => Value}]  overloaded
+			# @param [Value, nil]                             value
 			#
 			# @return [void]
 			def add(overloaded, value = nil)
@@ -225,9 +225,9 @@ module RLTK::CG
 			end
 			alias :<< :add
 
-			# @param [Integer] index Index of desired incoming {BasicBlock}.
+			# @param [Integer]  index  Index of desired incoming {BasicBlock}.
 			#
-			# @return [BasicBlock] Incoming {BasicBlock}.
+			# @return [BasicBlock]  Incoming {BasicBlock}.
 			def block(index)
 				index += self.size if index < 0
 
@@ -240,7 +240,7 @@ module RLTK::CG
 			#
 			# @yieldparam pair [Array(BasicBlock, Value)]
 			#
-			# @return [Enumerator] Returns an Enumerator if no block is given.
+			# @return [Enumerator]  Returns an Enumerator if no block is given.
 			def each
 				return to_enum(:each) unless block_given?
 
@@ -249,14 +249,14 @@ module RLTK::CG
 				self
 			end
 
-			# @return [Integer] Number of incoming {BasicBlock}/{Value} pairs.
+			# @return [Integer]  Number of incoming {BasicBlock}/{Value} pairs.
 			def size
 				Bindings.count_incoming(@phi)
 			end
 
-			# @param [Integer] index Index of desired incoming {Value}.
+			# @param [Integer]  index  Index of desired incoming {Value}.
 			#
-			# @return [BasicBlock] Incoming {Value}.
+			# @return [BasicBlock]  Incoming {Value}.
 			def value(index)
 				index += self.size if index < 0
 
@@ -273,8 +273,8 @@ module RLTK::CG
 	class SwitchInst < Instruction
 		# Add a case to this conditional jump.
 		#
-		# @param [Value]		val		Value for this case.
-		# @param [BasicBlock]	block	BasicBlock to jump to if this case is matched.
+		# @param [Value]       val    Value for this case.
+		# @param [BasicBlock]  block  BasicBlock to jump to if this case is matched.
 		#
 		# @return [void]
 		def add_case(val, block)

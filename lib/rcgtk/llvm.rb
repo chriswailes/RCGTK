@@ -1,21 +1,21 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/03/15
-# Description:	This file defines the LLVM module.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/03/15
+# Description: This file defines the LLVM module.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/version'
-require 'rltk/cg/bindings'
+require 'rcgtk/version'
+require 'rcgtk/bindings'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# This module contains global operations on the LLVM compiler infrastructure.
 	module LLVM
@@ -35,9 +35,9 @@ module RLTK::CG
 		#
 		# @see Bindings::ARCHS
 		#
-		# @param [Symbol] arch Architecture to initialize LLVM for.
+		# @param [Symbol]  arch  Architecture to initialize LLVM for.
 		#
-		# @raise [ArgumentError] An error is raised if an unsupported architecture is specified.
+		# @raise [ArgumentError]  An error is raised if an unsupported architecture is specified.
 		#
 		# @return [void]
 		def self.init(arch)
@@ -72,9 +72,9 @@ module RLTK::CG
 		#
 		# @see Bindings::ASM_PARSERS
 		#
-		# @param [Symbol] asm Assembly language type to initialize parser for.
+		# @param [Symbol]  asm  Assembly language type to initialize parser for.
 		#
-		# @raise [ArgumentError] An error is raised if an unsupported assembler parser is specified.
+		# @raise [ArgumentError]  An error is raised if an unsupported assembler parser is specified.
 		#
 		# @return [void]
 		def self.init_asm_parser(asm)
@@ -97,9 +97,9 @@ module RLTK::CG
 		#
 		# @see Bindings::ASM_PRINTERS
 		#
-		# @param [Symbol] asm Assembly language type to initialize printer for.
+		# @param [Symbol]  asm  Assembly language type to initialize printer for.
 		#
-		# @raise [ArgumentError] An error is raised if an unsupported assembler printer is specified.
+		# @raise [ArgumentError]  An error is raised if an unsupported assembler printer is specified.
 		#
 		# @return [void]
 		def self.init_asm_printer(asm)
@@ -142,7 +142,7 @@ module RLTK::CG
 			Bindings.stop_multithreaded
 		end
 
-		# @return [String] String representing the version of LLVM targeted by these bindings.
+		# @return [String]  String representing the version of LLVM targeted by these bindings.
 		def self.version
 			RLTK::LLVM_TARGET_VERSION
 		end

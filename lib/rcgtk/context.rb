@@ -1,20 +1,20 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/03/20
-# Description:	This file defines the Context class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/03/20
+# Description: This file defines the Context class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
+require 'rcgtk/bindings'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# Bindings for LLVM contexts.
 	class Context
@@ -36,7 +36,7 @@ module RLTK::CG
 		# Instance Methods #
 		####################
 
-		# @param [FFI::Pointer, nil] ptr Pointer representing a context.  If nil, a new context is created.
+		# @param [FFI::Pointer, nil]  ptr  Pointer representing a context.  If nil, a new context is created.
 		def initialize(ptr = nil)
 			@ptr = ptr || Bindings.context_create()
 

@@ -18,15 +18,14 @@
 require 'ffi'
 require 'filigree/boolean'
 
-# Ruby Language Toolkit
-require 'rltk/version'
-require 'rltk/cg'
+# Ruby Code Generation Toolkit
+require 'rcgtk/version'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# This module provides access to stored FFI::Pointer objects and allows a
 	# class to be passed directly into FFI methods.  It also provides a
@@ -38,7 +37,7 @@ module RLTK::CG
 
 		# Compares one BindingClass object to another.
 		#
-		# @param [BindingClass] other Another BindingClass object to compare to.
+		# @param [BindingClass]  other  Another BindingClass object to compare to.
 		#
 		# @return [Boolean]
 		def ==(other)
@@ -56,7 +55,7 @@ module RLTK::CG
 		class LibraryMismatch < Exception; end
 
 		# Require the generated bindings files while handling errors.
-		require 'rltk/cg/generated_bindings'
+		require 'rcgtk/generated_bindings'
 
 		#############
 		# Constants #
@@ -111,9 +110,9 @@ module RLTK::CG
 
 		# Converts a CamelCase string into an underscored string.
 		#
-		# @param [#to_s] name CamelCase string.
+		# @param [#to_s]  name  CamelCase string.
 		#
-		# @return [Symbol] Underscored string.
+		# @return [Symbol]  Underscored string.
 		def self.get_bname(name)
 			name.to_s.
 				gsub(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2').
@@ -123,9 +122,9 @@ module RLTK::CG
 
 		# A wrapper class for FFI::Library.attach_function
 		#
-		# @param [Symbol]		func		Function name.
-		# @param [Array<Object>] args		Argument types for FFI::Library.attach_function.
-		# @param [Object]		returns	Return type for FFI::Library.attach_function.
+		# @param [Symbol]         func     Function name.
+		# @param [Array<Object>]  args     Argument types for FFI::Library.attach_function.
+		# @param [Object]         returns  Return type for FFI::Library.attach_function.
 		def self.add_binding(func, args, returns)
 			attach_function(get_bname(func.to_s[4..-1]), func, args, returns)
 		end

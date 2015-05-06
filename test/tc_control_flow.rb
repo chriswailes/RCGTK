@@ -1,7 +1,7 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/05/09
-# Description:	This file contains unit tests for control flow instructions.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/05/09
+# Description: This file contains unit tests for control flow instructions.
 
 ############
 # Requires #
@@ -11,18 +11,18 @@
 require 'minitest/autorun'
 
 # Ruby Language Toolkit
-require 'rltk/cg/llvm'
-require 'rltk/cg/execution_engine'
-require 'rltk/cg/module'
-require 'rltk/cg/function'
-require 'rltk/cg/type'
+require 'rcgtk/llvm'
+require 'rcgtk/execution_engine'
+require 'rcgtk/module'
+require 'rcgtk/function'
+require 'rcgtk/type'
 
 class ControlFlowTester < Minitest::Test
 	def setup
-		RLTK::CG::LLVM.init(:X86)
+		RCGTK::LLVM.init(:X86)
 
-		@mod = RLTK::CG::Module.new('Testing Module')
-		@jit = RLTK::CG::JITCompiler.new(@mod)
+		@mod = RCGTK::Module.new('Testing Module')
+		@jit = RCGTK::JITCompiler.new(@mod)
 	end
 
 	##############
@@ -30,9 +30,9 @@ class ControlFlowTester < Minitest::Test
 	##############
 
 	def test_external_call
-		extern = @mod.functions.add('abs', RLTK::CG::NativeIntType, [RLTK::CG::NativeIntType])
+		extern = @mod.functions.add('abs', RCGTK::NativeIntType, [RCGTK::NativeIntType])
 
-		fun = @mod.functions.add('external_call_tester', RLTK::CG::NativeIntType, [RLTK::CG::NativeIntType]) do |fun|
+		fun = @mod.functions.add('external_call_tester', RCGTK::NativeIntType, [RCGTK::NativeIntType]) do |fun|
 			blocks.append { ret call(extern, fun.params[0]) }
 		end
 
@@ -40,15 +40,15 @@ class ControlFlowTester < Minitest::Test
 	end
 
 	def test_external_string_call
-		global = @mod.globals.add(RLTK::CG::ArrayType.new(RLTK::CG::Int8Type, 5), "path")
+		global = @mod.globals.add(RCGTK::ArrayType.new(RCGTK::Int8Type, 5), "path")
 		global.linkage = :internal
-		global.initializer = RLTK::CG::ConstantString.new('PATH')
+		global.initializer = RCGTK::ConstantString.new('PATH')
 
-		external = @mod.functions.add('getenv', RLTK::CG::PointerType.new(RLTK::CG::Int8Type), [RLTK::CG::PointerType.new(RLTK::CG::Int8Type)])
+		external = @mod.functions.add('getenv', RCGTK::PointerType.new(RCGTK::Int8Type), [RCGTK::PointerType.new(RCGTK::Int8Type)])
 
-		fun = @mod.functions.add('external_string_call_tester', RLTK::CG::PointerType.new(RLTK::CG::Int8Type), []) do
+		fun = @mod.functions.add('external_string_call_tester', RCGTK::PointerType.new(RCGTK::Int8Type), []) do
 			blocks.append do
-				param = gep(global, [RLTK::CG::NativeInt.new(0), RLTK::CG::NativeInt.new(0)])
+				param = gep(global, [RCGTK::NativeInt.new(0), RCGTK::NativeInt.new(0)])
 
 				ret call(external, param)
 			end
@@ -58,11 +58,11 @@ class ControlFlowTester < Minitest::Test
 	end
 
 	def test_nested_call
-		fun0 = @mod.functions.add('simple_call_tester0', RLTK::CG::NativeIntType, []) do
-			blocks.append { ret RLTK::CG::NativeInt.new(1) }
+		fun0 = @mod.functions.add('simple_call_tester0', RCGTK::NativeIntType, []) do
+			blocks.append { ret RCGTK::NativeInt.new(1) }
 		end
 
-		fun1 = @mod.functions.add('simple_call_tester1', RLTK::CG::NativeIntType, []) do
+		fun1 = @mod.functions.add('simple_call_tester1', RCGTK::NativeIntType, []) do
 			blocks.append { ret call(fun0) }
 		end
 
@@ -70,22 +70,22 @@ class ControlFlowTester < Minitest::Test
 	end
 
 	def test_recursive_call
-		fun = @mod.functions.add('recursive_call_tester', RLTK::CG::NativeIntType, [RLTK::CG::NativeIntType]) do |fun|
+		fun = @mod.functions.add('recursive_call_tester', RCGTK::NativeIntType, [RCGTK::NativeIntType]) do |fun|
 			entry	= blocks.append
 			recurse	= blocks.append
 			exit		= blocks.append
 
 			entry.build do
-				cond(icmp(:uge, fun.params[0], RLTK::CG::NativeInt.new(5)), exit, recurse)
+				cond(icmp(:uge, fun.params[0], RCGTK::NativeInt.new(5)), exit, recurse)
 			end
 
 			result =
 			recurse.build do
-				call(fun, add(fun.params[0], RLTK::CG::NativeInt.new(1))).tap { br exit }
+				call(fun, add(fun.params[0], RCGTK::NativeInt.new(1))).tap { br exit }
 			end
 
 			exit.build do
-				ret(phi(RLTK::CG::NativeIntType, {entry => fun.params[0], recurse => result}))
+				ret(phi(RCGTK::NativeIntType, {entry => fun.params[0], recurse => result}))
 			end
 		end
 
@@ -98,14 +98,14 @@ class ControlFlowTester < Minitest::Test
 	##############
 
 	def test_cond_jump
-		fun = @mod.functions.add('direct_jump_tester', RLTK::CG::NativeIntType, []) do |fun|
+		fun = @mod.functions.add('direct_jump_tester', RCGTK::NativeIntType, []) do |fun|
 			entry = blocks.append
 
-			bb0 = blocks.append { ret RLTK::CG::NativeInt.new(1) }
-			bb1 = blocks.append { ret RLTK::CG::NativeInt.new(0) }
+			bb0 = blocks.append { ret RCGTK::NativeInt.new(1) }
+			bb1 = blocks.append { ret RCGTK::NativeInt.new(0) }
 
 			entry.build do
-				cond(icmp(:eq, RLTK::CG::NativeInt.new(1), RLTK::CG::NativeInt.new(2)), bb0, bb1)
+				cond(icmp(:eq, RCGTK::NativeInt.new(1), RCGTK::NativeInt.new(2)), bb0, bb1)
 			end
 		end
 
@@ -113,11 +113,11 @@ class ControlFlowTester < Minitest::Test
 	end
 
 	def test_direct_jump
-		fun = @mod.functions.add('direct_jump_tester', RLTK::CG::NativeIntType, []) do |fun|
+		fun = @mod.functions.add('direct_jump_tester', RCGTK::NativeIntType, []) do |fun|
 			entry = blocks.append
 
-			bb0 = blocks.append { ret(RLTK::CG::NativeInt.new(1)) }
-			bb1 = blocks.append { ret(RLTK::CG::NativeInt.new(0)) }
+			bb0 = blocks.append { ret(RCGTK::NativeInt.new(1)) }
+			bb1 = blocks.append { ret(RCGTK::NativeInt.new(0)) }
 
 			entry.build { br bb1 }
 		end
@@ -126,14 +126,14 @@ class ControlFlowTester < Minitest::Test
 	end
 
 	def test_switched_jump
-		fun = @mod.functions.add('direct_jump_tester', RLTK::CG::NativeIntType, []) do |fun|
+		fun = @mod.functions.add('direct_jump_tester', RCGTK::NativeIntType, []) do |fun|
 			entry = blocks.append
 
-			bb0 = blocks.append { ret RLTK::CG::NativeInt.new(1) }
-			bb1 = blocks.append { ret RLTK::CG::NativeInt.new(0) }
+			bb0 = blocks.append { ret RCGTK::NativeInt.new(1) }
+			bb1 = blocks.append { ret RCGTK::NativeInt.new(0) }
 
 			entry.build do
-				switch(RLTK::CG::NativeInt.new(1), bb0, {RLTK::CG::NativeInt.new(1) => bb1})
+				switch(RCGTK::NativeInt.new(1), bb0, {RCGTK::NativeInt.new(1) => bb1})
 			end
 		end
 
@@ -145,9 +145,9 @@ class ControlFlowTester < Minitest::Test
 	##############
 
 	def test_select
-		fun = @mod.functions.add('select_tester', RLTK::CG::Int1Type, [RLTK::CG::NativeIntType]) do |fun|
+		fun = @mod.functions.add('select_tester', RCGTK::Int1Type, [RCGTK::NativeIntType]) do |fun|
 			blocks.append do
-				ret select(fun.params[0], RLTK::CG::Int1.new(0), RLTK::CG::Int1.new(1))
+				ret select(fun.params[0], RCGTK::Int1.new(0), RCGTK::Int1.new(1))
 			end
 		end
 
@@ -160,28 +160,28 @@ class ControlFlowTester < Minitest::Test
 	#############
 
 	def test_phi
-		fun = @mod.functions.add('phi_tester', RLTK::CG::NativeIntType, [RLTK::CG::NativeIntType]) do |fun|
+		fun = @mod.functions.add('phi_tester', RCGTK::NativeIntType, [RCGTK::NativeIntType]) do |fun|
 			entry	= blocks.append('entry')
 			block0	= blocks.append('block0')
 			block1	= blocks.append('block1')
 			exit		= blocks.append('exit')
 
 			entry.build do
-				cond(icmp(:eq, fun.params[0], RLTK::CG::NativeInt.new(0)), block0, block1)
+				cond(icmp(:eq, fun.params[0], RCGTK::NativeInt.new(0)), block0, block1)
 			end
 
 			result0 =
 			block0.build do
-				add(fun.params[0], RLTK::CG::NativeInt.new(1)).tap { br(exit) }
+				add(fun.params[0], RCGTK::NativeInt.new(1)).tap { br(exit) }
 			end
 
 			result1 =
 			block1.build do
-				sub(fun.params[0], RLTK::CG::NativeInt.new(1)).tap { br(exit) }
+				sub(fun.params[0], RCGTK::NativeInt.new(1)).tap { br(exit) }
 			end
 
 			exit.build do
-				ret(phi(RLTK::CG::NativeIntType, {block0 => result0, block1 => result1}))
+				ret(phi(RCGTK::NativeIntType, {block0 => result0, block1 => result1}))
 			end
 		end
 

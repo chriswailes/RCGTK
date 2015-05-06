@@ -1,21 +1,21 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/04/18
-# Description:	This file defines the GenericValue class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/04/18
+# Description: This file defines the GenericValue class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
-require 'rltk/cg/type'
+require 'rcgtk/bindings'
+require 'rcgtk/type'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# GenericValue objects are used to pass parameters into
 	# {ExecutionEngine ExecutionEngines} as well as retreive an evaluated
@@ -35,9 +35,9 @@ module RLTK::CG
 
 		# Creates a new GenericValue from a given Ruby value.
 		#
-		# @param [FFI::Pointer, Integer, ::Float, Boolean]	ruby_val
-		# @param [Type]								type		Type of Integer or Float to create.
-		# @param [Boolean]								signed	Signed or unsigned Integer.
+		# @param [FFI::Pointer, Integer, ::Float, Boolean]  ruby_val
+		# @param [Type]                                     type      Type of Integer or Float to create.
+		# @param [Boolean]                                  signed    Signed or unsigned Integer.
 		def initialize(ruby_val, type = nil, signed = true)
 			@ptr, @type =
 			case ruby_val
@@ -66,7 +66,7 @@ module RLTK::CG
 			ObjectSpace.define_finalizer(self, CLASS_FINALIZER)
 		end
 
-		# @param [Boolean] signed Treat the GenericValue as a signed integer.
+		# @param [Boolean]  signed  Treat the GenericValue as a signed integer.
 		#
 		# @return [Integer]
 		def to_i(signed = true)
@@ -75,11 +75,11 @@ module RLTK::CG
 			if signed and val >= 2**63 then val - 2**64 else val end
 		end
 
-		# @param [FloatType] type Type of the real value stored in this GenericValue.
+		# @param [FloatType]  type  Type of the real value stored in this GenericValue.
 		#
 		# @return [Float]
-		def to_f(type = RLTK::CG::FloatType)
-			Bindings.generic_value_to_float(@type || check_cg_type(type, RLTK::CG::NumberType), @ptr)
+		def to_f(type = RCGTK::FloatType)
+			Bindings.generic_value_to_float(@type || check_cg_type(type, RCGTK::NumberType), @ptr)
 		end
 
 		# @return [Boolean]
@@ -87,7 +87,7 @@ module RLTK::CG
 			self.to_i(false).to_bool
 		end
 
-		# @return [FFI::Pointer] GenericValue as a pointer.
+		# @return [FFI::Pointer]  GenericValue as a pointer.
 		def to_ptr_value
 			Bindings.generic_value_to_pointer(@ptr)
 		end

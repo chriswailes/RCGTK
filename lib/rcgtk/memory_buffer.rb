@@ -1,20 +1,20 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/04/16
-# Description:	This file defines the MemoryBuffer class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/04/16
+# Description: This file defines the MemoryBuffer class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
+require 'rcgtk/bindings'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# This class is used by the {Module} class to dump and load LLVM bitcode.
 	class MemoryBuffer

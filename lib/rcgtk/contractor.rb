@@ -1,8 +1,8 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/09/21
-# Description:	This file contains a combination of the Visitor and Builder
-#			classes called a Contractor.
+# Author:       Chris Wailes <chris.wailes@gmail.com>
+# Project:      Ruby Code Generation Toolkit
+# Date:         2012/09/21
+# Description:  This file contains a combination of the Visitor and Builder
+#               classes called a Contractor.
 
 ############
 # Requires #
@@ -12,13 +12,13 @@
 require 'filigree/visitor'
 
 # Ruby Language Toolkit
-require 'rltk/cg/builder'
+require 'rcgtk/builder'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	class Contractor < Builder
 

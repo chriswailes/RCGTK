@@ -1,21 +1,21 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/06/13
-# Description:	This file defines the Target class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/06/13
+# Description: This file defines the Target class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
-require 'rltk/cg/triple'
+require 'rcgtk/bindings'
+require 'rcgtk/triple'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# Class binding for the LLVM Triple class.
 	class Target
@@ -30,7 +30,7 @@ module RLTK::CG
 			@first ||= self.new(Bindings.get_first_target)
 		end
 
-		# @return [Target] Target object for the host architecture.
+		# @return [Target]  Target object for the host architecture.
 		def self.host
 			@host ||= self.new(Triple.host)
 		end
@@ -143,12 +143,12 @@ module RLTK::CG
 		# @see Bindings._enum_reloc_model_
 		# @see Bindings._enum_code_model_
 		#
-		# @param [Target]                                 target       Target description
-		# @param [String]                                 mcpu         Specific CPU type to target
-		# @param [Array<String>, String]                  features     Features present for this target machine
-		# @param [Symbol from _enum_code_gen_opt_level_]  opt_level    Optimization level
+		# @param [Target]                                 target      Target description
+		# @param [String]                                 mcpu        Specific CPU type to target
+		# @param [Array<String>, String]                  features    Features present for this target machine
+		# @param [Symbol from _enum_code_gen_opt_level_]  opt_level   Optimization level
 		# @param [Symbol from _enum_reloc_mode_]          reloc_mode  Code relocation model
-		# @param [Symbol from _enum_code_model_]          code_model   Code generation model
+		# @param [Symbol from _enum_code_model_]          code_model  Code generation model
 		def initialize(target, mcpu = '', features = '', opt_level = :none, reloc_mode = :default, code_model = :default)
 			# Convert the features parameter if necessary.
 			features = TargetMachine.build_feature_string(features) if features.is_a?(Array)

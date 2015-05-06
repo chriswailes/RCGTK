@@ -1,20 +1,20 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/06/13
-# Description:	This file defines the Triple class.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/06/13
+# Description: This file defines the Triple class.
 
 ############
 # Requires #
 ############
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
+require 'rcgtk/bindings'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# Class binding for the LLVM Triple class.
 	class Triple
@@ -24,12 +24,12 @@ module RLTK::CG
 		# Class Methods #
 		#################
 
-		# @return [Triple] Object representing the host architecture, vendor, OS, and environment.
+		# @return [Triple]  Object representing the host architecture, vendor, OS, and environment.
 		def self.host
 			@host ||= Triple.new(host_string)
 		end
 
-		# @return [String] String representation of the host architecture, vendor, OS, and environment.
+		# @return [String]  String representation of the host architecture, vendor, OS, and environment.
 		def self.host_string
 			@host_string ||= Bindings.get_default_target_triple
 		end
@@ -41,7 +41,7 @@ module RLTK::CG
 		# Create a new triple describing the host architecture, vendor, OS,
 		# and (optionally) environment.
 		#
-		# @param [FFI::Pointer, String] overloaded
+		# @param [FFI::Pointer, String]  overloaded
 		def initialize(overloaded)
 			@ptr, @str =
 			case overloaded
@@ -50,7 +50,7 @@ module RLTK::CG
 			end
 		end
 
-		# @return [String] String representation of this triple.
+		# @return [String]  String representation of this triple.
 		def to_s
 			@str ||= Bindings.get_triple_string(@ptr)
 		end

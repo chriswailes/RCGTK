@@ -1,8 +1,8 @@
-# Author:		Chris Wailes <chris.wailes@gmail.com>
-# Project: 	Ruby Language Toolkit
-# Date:		2012/03/15
-# Description:	This file defines the ExecutionEngine class, along with its
-#			subclasses.
+# Author:      Chris Wailes <chris.wailes@gmail.com>
+# Project:     Ruby Code Generation Toolkit
+# Date:        2012/03/15
+# Description: This file defines the ExecutionEngine class, along with its
+#              subclasses.
 
 ############
 # Requires #
@@ -12,15 +12,15 @@
 require 'filigree/abstract_class'
 
 # Ruby Language Toolkit
-require 'rltk/cg/bindings'
-require 'rltk/cg/pass_manager'
-require 'rltk/cg/target'
+require 'rcgtk/bindings'
+require 'rcgtk/pass_manager'
+require 'rcgtk/target'
 
 #######################
 # Classes and Modules #
 #######################
 
-module RLTK::CG
+module RCGTK
 
 	# The ExecutionEngine class and its subclasses execute code from the
 	# provided module, as well as providing a {PassManager} and
@@ -39,10 +39,10 @@ module RLTK::CG
 
 		# Create a new execution engine.
 		#
-		# @param [Module]	mod		Module to be executed.
-		# @param [Proc]	block	Block used by subclass constructors.  Don't use this parameter.
+		# @param [Module]  mod    Module to be executed.
+		# @param [Proc]    block  Block used by subclass constructors.  Don't use this parameter.
 		#
-		# @raise [RuntimeError] An error is raised if something went horribly wrong inside LLVM during the creation of this engine.
+		# @raise [RuntimeError]  An error is raised if something went horribly wrong inside LLVM during the creation of this engine.
 		def initialize(mod, &block)
 			check_type(mod, Module, 'mod')
 
@@ -76,7 +76,7 @@ module RLTK::CG
 
 		# Builds a pointer to a global value.
 		#
-		# @param [GlobalValue] global Value you want a pointer to.
+		# @param [GlobalValue]  global  Value you want a pointer to.
 		#
 		# @return [FFI::Pointer]
 		def pointer_to_global(global)
@@ -87,8 +87,8 @@ module RLTK::CG
 		# The arguments may be either GnericValue objects or any object that
 		# can be turned into a GenericValue.
 		#
-		# @param [Function]					fun	Function object to be executed.
-		# @param [Array<GenericValue, Object>]	args	Arguments to be passed to the function.
+		# @param [Function]                     fun   Function object to be executed.
+		# @param [Array<GenericValue, Object>]  args  Arguments to be passed to the function.
 		#
 		# @return [GenericValue]
 		def run_function(fun, *args)
@@ -107,8 +107,8 @@ module RLTK::CG
 		# Execute a function in the engine's module with the given arguments
 		# as the main function of a program.
 		#
-		# @param [Function]		fun	Function object to be executed.
-		# @param [Array<String>]	args	Arguments to be passed to the function.
+		# @param [Function]       fun   Function object to be executed.
+		# @param [Array<String>]  args  Arguments to be passed to the function.
 		#
 		# @return [GenericValue]
 		def run_function_as_main(fun, *args)
@@ -124,7 +124,7 @@ module RLTK::CG
 		end
 		alias :run_main :run_function_as_main
 
-		# @return [TargetData] Information about the target architecture for this execution engine.
+		# @return [TargetData]  Information about the target architecture for this execution engine.
 		def target_data
 			TargetData.new(Bindings.get_execution_engine_target_data(@ptr))
 		end
@@ -135,7 +135,7 @@ module RLTK::CG
 
 		# Create a new interpreter.
 		#
-		# @param [Module] mod Module to be executed.
+		# @param [Module]  mod  Module to be executed.
 		def initialize(mod)
 			super(mod) do |ptr, error|
 				Bindings.create_interpreter_for_module(ptr, mod, error)
@@ -148,8 +148,8 @@ module RLTK::CG
 
 		# Create a new just-in-time compiler.
 		#
-		# @param [Module]	mod		Module to be executed.
-		# @param [1, 2, 3]	opt_level	Optimization level; determines how much optimization is done during execution.
+		# @param [Module]   mod        Module to be executed.
+		# @param [1, 2, 3]  opt_level  Optimization level; determines how much optimization is done during execution.
 		def initialize(mod, opt_level = 3)
 			super(mod) do |ptr, error|
 				Bindings.create_jit_compiler_for_module(ptr, mod, opt_level, error)
