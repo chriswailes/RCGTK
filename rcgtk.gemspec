@@ -1,7 +1,7 @@
 # Author:      Chris Wailes <chris.wailes@gmail.com>
 # Project:     Ruby Code Generation Toolkit
 # Date:        2015/05/05
-# Description: This is RLTK's Gem specification.
+# Description: This is RCGTK's Gem specification.
 
 require File.expand_path("../lib/rcgtk/version", __FILE__)
 
@@ -37,23 +37,23 @@ Gem::Specification.new do |s|
 	# Dependencies #
 	################
 
-	s.add_dependency('ffi', '>= 1.0.0')
-	s.add_dependency('filigree', '>= 0.2.0')
+	s.add_runtime_dependency('ffi', '~> 1.0', '>= 1.0.0')
+	s.add_runtime_dependency('filigree', '~> 0.3', '>= 0.3.3')
 
 	############################
 	# Development Dependencies #
 	############################
 
-	s.add_development_dependency('bundler')
-	s.add_development_dependency('ffi_gen', '>= 1.1.0')
-	s.add_development_dependency('flay')
-	s.add_development_dependency('flog')
-	s.add_development_dependency('minitest')
-	s.add_development_dependency('pry')
-	s.add_development_dependency('rake')
-	s.add_development_dependency('rake-notes')
-	s.add_development_dependency('reek')
-	s.add_development_dependency('rubygems-tasks')
-	s.add_development_dependency('simplecov')
-	s.add_development_dependency('yard', '>= 0.8.1')
+	s.add_development_dependency('bundler', '~> 0')
+	s.add_development_dependency('ffi_gen', '~> 1.1', '>= 1.1.0')
+	s.add_development_dependency('flay', '~> 0')
+	s.add_development_dependency('flog', '~> 0')
+	s.add_development_dependency('minitest', '~> 0')
+	s.add_development_dependency('pry', '~> 0')
+	s.add_development_dependency('rake', '~> 0')
+	s.add_development_dependency('rake-notes', '~> 0')
+	s.add_development_dependency('reek', '~> 0')
+	s.add_development_dependency('rubygems-tasks', '~> 0')
+	s.add_development_dependency('simplecov', '~> 0')
+	s.add_development_dependency('yard', '~> 0.8', '>= 0.8.1')
 end
