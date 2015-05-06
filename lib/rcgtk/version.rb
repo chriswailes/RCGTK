@@ -5,7 +5,7 @@
 
 module RCGTK
 	# The version number of the RCGTK library.
-	VERSION             = '3.4.0'
+	VERSION             = '3.4.1'
 	# The version of LLVM targeted by RCGTK.
 	LLVM_TARGET_VERSION = '3.4'
 end

@@ -10,7 +10,7 @@
 # Gems
 require 'filigree/request_file'
 
-# RLTK
+# RCGTK
 require File.expand_path("../lib/rcgtk/version", __FILE__)
 
 ###########
@@ -105,7 +105,7 @@ request_file('yard', 'Yard is not installed.') do
 end
 
 ##############
-# RLTK Tasks #
+# RCGTK Tasks #
 ##############
 
 desc 'Generate the bindings for LLVM.'
@@ -158,7 +158,7 @@ task :gen_bindings do
 
 	FFIGen.generate(
 		module_name: 'RCGTK::Bindings',
-		ffi_lib:     "LLVM-#{RLTK::LLVM_TARGET_VERSION}",
+		ffi_lib:     "LLVM-#{RCGTK::LLVM_TARGET_VERSION}",
 		headers:     headers,
 		cflags:      `llvm-config --cflags`.split,
 		prefixes:    ['LLVM'],
