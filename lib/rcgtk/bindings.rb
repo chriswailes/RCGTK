@@ -48,7 +48,7 @@ module RCGTK
 	# This module contains FFI bindings to LLVM.
 	module Bindings
 		extend FFI::Library
-		ffi_lib("LLVM-#{RLTK::LLVM_TARGET_VERSION}")
+		ffi_lib("LLVM-#{RCGTK::LLVM_TARGET_VERSION}")
 
 		# Exception that is thrown when the LLVM target version does not
 		# match the version of LLVM present on the system.

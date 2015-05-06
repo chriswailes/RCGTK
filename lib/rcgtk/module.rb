@@ -10,6 +10,7 @@
 # Ruby Language Toolkit
 require 'rcgtk/bindings'
 require 'rcgtk/context'
+require 'rcgtk/memory_buffer'
 
 #######################
 # Classes and Modules #

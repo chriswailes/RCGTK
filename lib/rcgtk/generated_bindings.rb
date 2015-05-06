@@ -2,7 +2,7 @@
 
 require 'ffi'
 
-module RLTK::CG::Bindings
+module RCGTK::Bindings
   extend FFI::Library
   ffi_lib 'LLVM-3.4'
 
@@ -6399,15 +6399,15 @@ module RLTK::CG::Bindings
   # (Not documented)
   module TargetWrappers
     def has_jit()
-      RLTK::CG::Bindings.target_has_jit(self)
+      RCGTK::Bindings.target_has_jit(self)
     end
 
     def has_target_machine()
-      RLTK::CG::Bindings.target_has_target_machine(self)
+      RCGTK::Bindings.target_has_target_machine(self)
     end
 
     def has_asm_backend()
-      RLTK::CG::Bindings.target_has_asm_backend(self)
+      RCGTK::Bindings.target_has_asm_backend(self)
     end
   end
 

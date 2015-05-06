@@ -39,13 +39,13 @@ module RCGTK
 			when FFI::Pointer
 				overloaded
 
-			when RLTK::CG::Module
+			when RCGTK::Module
 				@type = if type_info.first.is_a?(FunctionType) then type_info.first else FunctionType.new(*type_info) end
 
 				Bindings.add_function(overloaded, name.to_s, @type)
 
 			else
-				raise 'The first argument to Function.new must be either a pointer or an instance of RLTK::CG::Module.'
+				raise 'The first argument to Function.new must be either a pointer or an instance of RCGTK::Module.'
 			end
 
 			self.instance_exec(self, &block) if block

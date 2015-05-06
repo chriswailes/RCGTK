@@ -9,6 +9,7 @@
 
 # Ruby Language Toolkit
 require 'rcgtk/bindings'
+require 'rcgtk/builder'
 require 'rcgtk/context'
 require 'rcgtk/value'
 

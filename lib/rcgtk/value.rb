@@ -9,6 +9,7 @@
 
 # Gems
 require 'filigree/abstract_class'
+require 'filigree/class'
 
 # Ruby Language Toolkit
 require 'rcgtk/bindings'

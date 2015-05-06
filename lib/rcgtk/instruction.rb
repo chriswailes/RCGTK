@@ -69,10 +69,10 @@ module RCGTK
 			TESTABLE.each do |el|
 				klass, test =
 				if el.is_a?(Symbol)
-					[RLTK::CG.const_get("#{el}Inst".to_sym), Bindings.get_bname("IsA#{el}Inst")]
+					[RCGTK.const_get("#{el}Inst".to_sym), Bindings.get_bname("IsA#{el}Inst")]
 
 				else
-					[RLTK::CG.const_get("#{el.first}Inst".to_sym), Bindings.get_bname("IsA#{el.last}Inst")]
+					[RCGTK.const_get("#{el.first}Inst".to_sym), Bindings.get_bname("IsA#{el.last}Inst")]
 				end
 
 				match = klass if Bindings.send(test, ptr)

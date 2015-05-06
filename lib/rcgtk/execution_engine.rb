@@ -158,7 +158,7 @@ module RCGTK
 	end
 
 	# Options for initializing a {MCJITCompiler}.
-	class MCJITCompilerOptions < RLTK::CG::Bindings::MCJITCompilerOptions
+	class MCJITCompilerOptions < RCGTK::Bindings::MCJITCompilerOptions
 
 		# Create an object representing MCJIT compiler options.
 		#
