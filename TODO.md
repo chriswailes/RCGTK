@@ -15,6 +15,7 @@ These are items that would provide additional features to RLTK users.
   * New lambda syntax
   * New hash syntax
   * Inject methods
+* Make gen_bindings take a path to the header files
 * Update the documentation to use the @overloaded tag.
 * Review and add to support for object finalization / memory cleanup
 * Find home for unwrapped C binding functions
