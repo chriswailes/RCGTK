@@ -13,6 +13,7 @@ require 'filigree/abstract_class'
 
 # Ruby Language Toolkit
 require 'rcgtk/bindings'
+require 'rcgtk/generic_value'
 require 'rcgtk/pass_manager'
 require 'rcgtk/target'
 
