@@ -130,18 +130,6 @@ module RCGTK
 			Bindings.shutdown
 		end
 
-		# Initialize LLVM's multithreaded infrestructure.
-		#
-		# @return [void]
-		def self.start_multithreaded
-			Bindings.start_multithreaded
-		end
-
-		# Shutdown and cleanup LLVM's multithreaded infrastructure.
-		def self.stop_multithreaded
-			Bindings.stop_multithreaded
-		end
-
 		# @return [String]  String representing the version of LLVM targeted by these bindings.
 		def self.version
 			RLTK::LLVM_TARGET_VERSION

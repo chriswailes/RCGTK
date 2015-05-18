@@ -146,5 +146,8 @@ module RCGTK
 		ASM_PRINTERS.each do |asm|
 			add_binding("LLVMInitialize#{asm}AsmPrinter", [], :void)
 		end
+
+		# TODO: Figure out why this isn't being picked up by gen_bindings.
+		add_binding('LLVMLoadLibraryPermanently', [:string], :void)
 	end
 end

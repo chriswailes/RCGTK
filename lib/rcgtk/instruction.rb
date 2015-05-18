@@ -89,6 +89,11 @@ module RCGTK
 			@ptr = check_type(ptr, FFI::Pointer, 'ptr')
 		end
 
+		# @return [Instruction]  Clone of this instruction
+		def clone
+			Instruction.new(Bindings.instruction_clone(@ptr))
+		end
+
 		# @return [Instruction, nil]  Instruction that follows the current one in a {BasicBlock}.
 		def next
 			if (ptr = Bindings.get_next_instruction(@ptr)).null? then nil else Instruction.from_ptr(ptr) end
@@ -156,6 +161,28 @@ module RCGTK
 		# @return [void]
 		def tail_call=(bool)
 			Bindings.set_tail_call(@ptr, bool.to_i)
+		end
+	end
+
+	# An instruction used to compare floating point values.
+	#
+	# @LLVMInst fcmp
+	class FCmpInst < Instruction
+
+		# @return [Symbol from _enum_real_predicate_]  Predicate used by this instruction
+		def predicate
+			Bindings.get_f_cmp_predicate(@ptr)
+		end
+	end
+
+	# An instruction used to compare integer values.
+	#
+	# @LLVMInst icmp
+	class IntCmpInst < Instruction
+
+		# @return [Symbol from _enum_int_predicate_]  Predicate used by this instruction
+		def predicate
+			Bindings.get_i_cmp_predicate(@ptr)
 		end
 	end
 
@@ -330,9 +357,6 @@ module RCGTK
 	# @LLVMInst fadd
 	class FAddInst                < Instruction; end
 
-	# @LLVMInst fcmp
-	class FCmpInst                < Instruction; end
-
 	# @LLVMInst fdiv
 	class FDivInst                < Instruction; end
 
@@ -388,9 +412,6 @@ module RCGTK
 	class IntToPtrInst            < Instruction; end
 
 	class IntCastInst             < Instruction; end
-
-	# @LLVMInst icmp
-	class IntCmpInst              < Instruction; end
 
 	# @LLVMInst invoke
 	class InvokeInst              < Instruction; end

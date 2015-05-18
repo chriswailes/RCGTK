@@ -312,6 +312,17 @@ module RCGTK
 			ConstantExpr.new(Bindings.const_bit_cast(@ptr, check_cg_type(type)))
 		end
 
+		# Returns a constant expression representing the element at a given
+		# index.
+		#
+		# @param [Integer]  index  Index of the requested element.
+		#
+		# @return [ConstantExpr]  The requested element as a constant.
+		def get_element_as_constant(index)
+			ConstantExpr.new(Bindings.get_element_as_constant(@ptr, index))
+		end
+		alias :geac :get_element_as_constant
+
 		# Get a pointer to an element of a constant value.
 		#
 		# @param [Array<Value>]  indices  A Ruby array of Value objects representing indicies into the constant value.

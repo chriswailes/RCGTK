@@ -109,10 +109,12 @@ end
 ##############
 
 desc 'Generate the bindings for LLVM.'
-task :gen_bindings do
+task :gen_bindings, :path do |t, args|
 	require 'ffi_gen'
 
 	# Generate the standard LLVM bindings.
+
+	include_path = args[:path] ? args[:path] : 'llvm-c/'
 
 	deprecated = [
 		# BitReader.h
@@ -124,6 +126,8 @@ task :gen_bindings do
 
 		# Core.h
 		'LLVMCreateFunctionPassManager',
+		'LLVMStartMultithreaded',
+		'LLVMStopMultithreaded',
 
 		# ExectionEngine.h
 		'LLVMCreateExecutionEngine',
@@ -134,26 +138,31 @@ task :gen_bindings do
 	]
 
 	headers = [
-		'llvm-c/Core.h',
+		"#{include_path}/Core.h",
 
-		'llvm-c/Analysis.h',
-		'llvm-c/BitReader.h',
-		'llvm-c/BitWriter.h',
-		'llvm-c/Disassembler.h',
-		'llvm-c/ExecutionEngine.h',
-		'llvm-c/Initialization.h',
-		'llvm-c/IRReader.h',
-		'llvm-c/Linker.h',
-		'llvm-c/LinkTimeOptimizer.h',
-		'llvm-c/Object.h',
-		'llvm-c/Support.h',
-		'llvm-c/Target.h',
-		'llvm-c/TargetMachine.h',
+		"#{include_path}/Analysis.h",
+		"#{include_path}/BitReader.h",
+		"#{include_path}/BitWriter.h",
+		"#{include_path}/Disassembler.h",
+		"#{include_path}/Initialization.h",
+		"#{include_path}/IRReader.h",
+		"#{include_path}/Linker.h",
+		"#{include_path}/LinkTimeOptimizer.h",
+		"#{include_path}/Object.h",
+		"#{include_path}/Support.h",
+		"#{include_path}/Target.h",
+		"#{include_path}/TargetMachine.h",
 
-		'llvm-c/Transforms/IPO.h',
-		'llvm-c/Transforms/PassManagerBuilder.h',
-		'llvm-c/Transforms/Scalar.h',
-		'llvm-c/Transforms/Vectorize.h'
+		# This must be listed after Target.h and TargetMachine.h due to a bug
+		# with FFI-Gen.
+		#
+		# TODO: File an Issue with ffi-gen project.
+		"#{include_path}/ExecutionEngine.h",
+
+		"#{include_path}/Transforms/IPO.h",
+		"#{include_path}/Transforms/PassManagerBuilder.h",
+		"#{include_path}/Transforms/Scalar.h",
+		"#{include_path}/Transforms/Vectorize.h"
 	]
 
 	FFIGen.generate(

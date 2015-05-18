@@ -4,7 +4,7 @@ require 'ffi'
 
 module RCGTK::Bindings
   extend FFI::Library
-  ffi_lib "LLVM-3.5"
+  ffi_lib "LLVM-3.6"
 
   def self.attach_function(name, *_)
     begin; super; rescue FFI::NotFoundError => e
@@ -73,19 +73,6 @@ module RCGTK::Bindings
   DISASSEMBLER_OPTION_SET_INSTR_COMMENTS = 8
 
   DISASSEMBLER_OPTION_PRINT_LATENCY = 16
-
-  # (Not documented)
-  class OpaqueMemoryBuffer < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # (Not documented)
-  #
-  # @method load_library_permanently(filename)
-  # @param [String] filename
-  # @return [Integer]
-  # @scope class
-  attach_function :load_library_permanently, :LLVMLoadLibraryPermanently, [:string], :int
 
   # (Not documented)
   class OpaqueContext < FFI::Struct
@@ -1058,6 +1045,14 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method clone_module(m)
+  # @param [OpaqueModule] m
+  # @return [OpaqueModule]
+  # @scope class
+  attach_function :clone_module, :LLVMCloneModule, [OpaqueModule], OpaqueModule
+
+  # (Not documented)
+  #
   # @method dispose_module(m)
   # @param [OpaqueModule] m
   # @return [nil]
@@ -1782,22 +1777,6 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
-  # @method is_amd_node(val)
-  # @param [OpaqueValue] val
-  # @return [OpaqueValue]
-  # @scope class
-  attach_function :is_amd_node, :LLVMIsAMDNode, [OpaqueValue], OpaqueValue
-
-  # (Not documented)
-  #
-  # @method is_amd_string(val)
-  # @param [OpaqueValue] val
-  # @return [OpaqueValue]
-  # @scope class
-  attach_function :is_amd_string, :LLVMIsAMDString, [OpaqueValue], OpaqueValue
-
-  # (Not documented)
-  #
   # @method is_a_user(val)
   # @param [OpaqueValue] val
   # @return [OpaqueValue]
@@ -2350,6 +2329,22 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method is_amd_node(val)
+  # @param [OpaqueValue] val
+  # @return [OpaqueValue]
+  # @scope class
+  attach_function :is_amd_node, :LLVMIsAMDNode, [OpaqueValue], OpaqueValue
+
+  # (Not documented)
+  #
+  # @method is_amd_string(val)
+  # @param [OpaqueValue] val
+  # @return [OpaqueValue]
+  # @scope class
+  attach_function :is_amd_string, :LLVMIsAMDString, [OpaqueValue], OpaqueValue
+
+  # (Not documented)
+  #
   # @method get_first_use(val)
   # @param [OpaqueValue] val
   # @return [OpaqueUse]
@@ -2388,6 +2383,15 @@ module RCGTK::Bindings
   # @return [OpaqueValue]
   # @scope class
   attach_function :get_operand, :LLVMGetOperand, [OpaqueValue, :uint], OpaqueValue
+
+  # (Not documented)
+  #
+  # @method get_operand_use(val, index)
+  # @param [OpaqueValue] val
+  # @param [Integer] index
+  # @return [OpaqueUse]
+  # @scope class
+  attach_function :get_operand_use, :LLVMGetOperandUse, [OpaqueValue, :uint], OpaqueUse
 
   # (Not documented)
   #
@@ -2534,6 +2538,15 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method const_real_get_double(constant_val, loses_info)
+  # @param [OpaqueValue] constant_val
+  # @param [FFI::Pointer(*Bool)] loses_info
+  # @return [Float]
+  # @scope class
+  attach_function :const_real_get_double, :LLVMConstRealGetDouble, [OpaqueValue, :pointer], :double
+
+  # (Not documented)
+  #
   # @method const_string_in_context(c, str, length, dont_null_terminate)
   # @param [OpaqueContext] c
   # @param [String] str
@@ -2552,6 +2565,23 @@ module RCGTK::Bindings
   # @return [OpaqueValue]
   # @scope class
   attach_function :const_string, :LLVMConstString, [:string, :uint, :int], OpaqueValue
+
+  # (Not documented)
+  #
+  # @method is_constant_string(c)
+  # @param [OpaqueValue] c
+  # @return [Integer]
+  # @scope class
+  attach_function :is_constant_string, :LLVMIsConstantString, [OpaqueValue], :int
+
+  # (Not documented)
+  #
+  # @method get_as_string(c, out)
+  # @param [OpaqueValue] c
+  # @param [FFI::Pointer(*SizeT)] out
+  # @return [String]
+  # @scope class
+  attach_function :get_as_string, :LLVMGetAsString, [OpaqueValue, :pointer], :string
 
   # (Not documented)
   #
@@ -2593,6 +2623,15 @@ module RCGTK::Bindings
   # @return [OpaqueValue]
   # @scope class
   attach_function :const_named_struct, :LLVMConstNamedStruct, [OpaqueType, :pointer, :uint], OpaqueValue
+
+  # (Not documented)
+  #
+  # @method get_element_as_constant(c, idx)
+  # @param [OpaqueValue] c
+  # @param [Integer] idx
+  # @return [OpaqueValue]
+  # @scope class
+  attach_function :get_element_as_constant, :LLVMGetElementAsConstant, [OpaqueValue, :uint], OpaqueValue
 
   # (Not documented)
   #
@@ -3982,6 +4021,22 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method get_f_cmp_predicate(inst)
+  # @param [OpaqueValue] inst
+  # @return [Symbol from _enum_real_predicate_]
+  # @scope class
+  attach_function :get_f_cmp_predicate, :LLVMGetFCmpPredicate, [OpaqueValue], :real_predicate
+
+  # (Not documented)
+  #
+  # @method instruction_clone(inst)
+  # @param [OpaqueValue] inst
+  # @return [OpaqueValue]
+  # @scope class
+  attach_function :instruction_clone, :LLVMInstructionClone, [OpaqueValue], OpaqueValue
+
+  # (Not documented)
+  #
   # @method set_instruction_call_conv(instr, cc)
   # @param [OpaqueValue] instr
   # @param [Integer] cc
@@ -4043,6 +4098,58 @@ module RCGTK::Bindings
   # @return [nil]
   # @scope class
   attach_function :set_tail_call, :LLVMSetTailCall, [OpaqueValue, :int], :void
+
+  # (Not documented)
+  #
+  # @method get_num_successors(term)
+  # @param [OpaqueValue] term
+  # @return [Integer]
+  # @scope class
+  attach_function :get_num_successors, :LLVMGetNumSuccessors, [OpaqueValue], :uint
+
+  # (Not documented)
+  #
+  # @method get_successor(term, i)
+  # @param [OpaqueValue] term
+  # @param [Integer] i
+  # @return [OpaqueBasicBlock]
+  # @scope class
+  attach_function :get_successor, :LLVMGetSuccessor, [OpaqueValue, :uint], OpaqueBasicBlock
+
+  # (Not documented)
+  #
+  # @method set_successor(term, i, block)
+  # @param [OpaqueValue] term
+  # @param [Integer] i
+  # @param [OpaqueBasicBlock] block
+  # @return [nil]
+  # @scope class
+  attach_function :set_successor, :LLVMSetSuccessor, [OpaqueValue, :uint, OpaqueBasicBlock], :void
+
+  # (Not documented)
+  #
+  # @method is_conditional(branch)
+  # @param [OpaqueValue] branch
+  # @return [Integer]
+  # @scope class
+  attach_function :is_conditional, :LLVMIsConditional, [OpaqueValue], :int
+
+  # (Not documented)
+  #
+  # @method get_condition(branch)
+  # @param [OpaqueValue] branch
+  # @return [OpaqueValue]
+  # @scope class
+  attach_function :get_condition, :LLVMGetCondition, [OpaqueValue], OpaqueValue
+
+  # (Not documented)
+  #
+  # @method set_condition(branch, cond)
+  # @param [OpaqueValue] branch
+  # @param [OpaqueValue] cond
+  # @return [nil]
+  # @scope class
+  attach_function :set_condition, :LLVMSetCondition, [OpaqueValue, OpaqueValue], :void
 
   # (Not documented)
   #
@@ -5274,9 +5381,9 @@ module RCGTK::Bindings
   # @param [Integer] input_data_length
   # @param [String] buffer_name
   # @param [Integer] requires_null_terminator
-  # @return [OpaqueMemoryBuffer]
+  # @return [FFI::Pointer(MemoryBufferRef)]
   # @scope class
-  attach_function :create_memory_buffer_with_memory_range, :LLVMCreateMemoryBufferWithMemoryRange, [:string, :ulong, :string, :int], OpaqueMemoryBuffer
+  attach_function :create_memory_buffer_with_memory_range, :LLVMCreateMemoryBufferWithMemoryRange, [:string, :ulong, :string, :int], :pointer
 
   # (Not documented)
   #
@@ -5284,33 +5391,33 @@ module RCGTK::Bindings
   # @param [String] input_data
   # @param [Integer] input_data_length
   # @param [String] buffer_name
-  # @return [OpaqueMemoryBuffer]
+  # @return [FFI::Pointer(MemoryBufferRef)]
   # @scope class
-  attach_function :create_memory_buffer_with_memory_range_copy, :LLVMCreateMemoryBufferWithMemoryRangeCopy, [:string, :ulong, :string], OpaqueMemoryBuffer
+  attach_function :create_memory_buffer_with_memory_range_copy, :LLVMCreateMemoryBufferWithMemoryRangeCopy, [:string, :ulong, :string], :pointer
 
   # (Not documented)
   #
   # @method get_buffer_start(mem_buf)
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @return [String]
   # @scope class
-  attach_function :get_buffer_start, :LLVMGetBufferStart, [OpaqueMemoryBuffer], :string
+  attach_function :get_buffer_start, :LLVMGetBufferStart, [:pointer], :string
 
   # (Not documented)
   #
   # @method get_buffer_size(mem_buf)
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @return [Integer]
   # @scope class
-  attach_function :get_buffer_size, :LLVMGetBufferSize, [OpaqueMemoryBuffer], :ulong
+  attach_function :get_buffer_size, :LLVMGetBufferSize, [:pointer], :ulong
 
   # (Not documented)
   #
   # @method dispose_memory_buffer(mem_buf)
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @return [nil]
   # @scope class
-  attach_function :dispose_memory_buffer, :LLVMDisposeMemoryBuffer, [OpaqueMemoryBuffer], :void
+  attach_function :dispose_memory_buffer, :LLVMDisposeMemoryBuffer, [:pointer], :void
 
   # (Not documented)
   #
@@ -5386,20 +5493,6 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
-  # @method start_multithreaded()
-  # @return [Integer]
-  # @scope class
-  attach_function :start_multithreaded, :LLVMStartMultithreaded, [], :int
-
-  # (Not documented)
-  #
-  # @method stop_multithreaded()
-  # @return [nil]
-  # @scope class
-  attach_function :stop_multithreaded, :LLVMStopMultithreaded, [], :void
-
-  # (Not documented)
-  #
   # @method is_multithreaded()
   # @return [Integer]
   # @scope class
@@ -5464,65 +5557,65 @@ module RCGTK::Bindings
   # (Not documented)
   #
   # @method parse_bitcode(mem_buf, out_module, out_message)
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @param [FFI::Pointer(*ModuleRef)] out_module
   # @param [FFI::Pointer(**CharS)] out_message
   # @return [Integer]
   # @scope class
-  attach_function :parse_bitcode, :LLVMParseBitcode, [OpaqueMemoryBuffer, :pointer, :pointer], :int
+  attach_function :parse_bitcode, :LLVMParseBitcode, [:pointer, :pointer, :pointer], :int
 
   # (Not documented)
   #
   # @method parse_bitcode_in_context(context_ref, mem_buf, out_module, out_message)
   # @param [OpaqueContext] context_ref
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @param [FFI::Pointer(*ModuleRef)] out_module
   # @param [FFI::Pointer(**CharS)] out_message
   # @return [Integer]
   # @scope class
-  attach_function :parse_bitcode_in_context, :LLVMParseBitcodeInContext, [OpaqueContext, OpaqueMemoryBuffer, :pointer, :pointer], :int
+  attach_function :parse_bitcode_in_context, :LLVMParseBitcodeInContext, [OpaqueContext, :pointer, :pointer, :pointer], :int
 
   # (Not documented)
   #
   # @method get_bitcode_module_in_context(context_ref, mem_buf, out_m, out_message)
   # @param [OpaqueContext] context_ref
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @param [FFI::Pointer(*ModuleRef)] out_m
   # @param [FFI::Pointer(**CharS)] out_message
   # @return [Integer]
   # @scope class
-  attach_function :get_bitcode_module_in_context, :LLVMGetBitcodeModuleInContext, [OpaqueContext, OpaqueMemoryBuffer, :pointer, :pointer], :int
+  attach_function :get_bitcode_module_in_context, :LLVMGetBitcodeModuleInContext, [OpaqueContext, :pointer, :pointer, :pointer], :int
 
   # (Not documented)
   #
   # @method get_bitcode_module(mem_buf, out_m, out_message)
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @param [FFI::Pointer(*ModuleRef)] out_m
   # @param [FFI::Pointer(**CharS)] out_message
   # @return [Integer]
   # @scope class
-  attach_function :get_bitcode_module, :LLVMGetBitcodeModule, [OpaqueMemoryBuffer, :pointer, :pointer], :int
+  attach_function :get_bitcode_module, :LLVMGetBitcodeModule, [:pointer, :pointer, :pointer], :int
 
   # (Not documented)
   #
   # @method get_bitcode_module_provider_in_context(context_ref, mem_buf, out_mp, out_message)
   # @param [OpaqueContext] context_ref
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @param [FFI::Pointer(*ModuleProviderRef)] out_mp
   # @param [FFI::Pointer(**CharS)] out_message
   # @return [Integer]
   # @scope class
-  attach_function :get_bitcode_module_provider_in_context, :LLVMGetBitcodeModuleProviderInContext, [OpaqueContext, OpaqueMemoryBuffer, :pointer, :pointer], :int
+  attach_function :get_bitcode_module_provider_in_context, :LLVMGetBitcodeModuleProviderInContext, [OpaqueContext, :pointer, :pointer, :pointer], :int
 
   # (Not documented)
   #
   # @method get_bitcode_module_provider(mem_buf, out_mp, out_message)
-  # @param [OpaqueMemoryBuffer] mem_buf
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
   # @param [FFI::Pointer(*ModuleProviderRef)] out_mp
   # @param [FFI::Pointer(**CharS)] out_message
   # @return [Integer]
   # @scope class
-  attach_function :get_bitcode_module_provider, :LLVMGetBitcodeModuleProvider, [OpaqueMemoryBuffer, :pointer, :pointer], :int
+  attach_function :get_bitcode_module_provider, :LLVMGetBitcodeModuleProvider, [:pointer, :pointer, :pointer], :int
 
   # (Not documented)
   #
@@ -5552,6 +5645,14 @@ module RCGTK::Bindings
   # @return [Integer]
   # @scope class
   attach_function :write_bitcode_to_file_handle, :LLVMWriteBitcodeToFileHandle, [OpaqueModule, :int], :int
+
+  # (Not documented)
+  #
+  # @method write_bitcode_to_memory_buffer(m)
+  # @param [OpaqueModule] m
+  # @return [FFI::Pointer(MemoryBufferRef)]
+  # @scope class
+  attach_function :write_bitcode_to_memory_buffer, :LLVMWriteBitcodeToMemoryBuffer, [OpaqueModule], :pointer
 
   # (Not documented)
   #
@@ -5642,6 +5743,20 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method create_disasm_cpu_features(triple, cpu, features, dis_info, tag_type, get_op_info, symbol_look_up)
+  # @param [String] triple
+  # @param [String] cpu
+  # @param [String] features
+  # @param [FFI::Pointer(*Void)] dis_info
+  # @param [Integer] tag_type
+  # @param [Proc(_callback_op_info_callback_)] get_op_info
+  # @param [Proc(_callback_symbol_lookup_callback_)] symbol_look_up
+  # @return [FFI::Pointer(DisasmContextRef)]
+  # @scope class
+  attach_function :create_disasm_cpu_features, :LLVMCreateDisasmCPUFeatures, [:string, :string, :string, :pointer, :int, :op_info_callback, :symbol_lookup_callback], :pointer
+
+  # (Not documented)
+  #
   # @method set_disasm_options(dc, options)
   # @param [FFI::Pointer(DisasmContextRef)] dc
   # @param [Integer] options
@@ -5669,6 +5784,474 @@ module RCGTK::Bindings
   # @return [Integer]
   # @scope class
   attach_function :disasm_instruction, :LLVMDisasmInstruction, [:pointer, :pointer, :ulong, :ulong, :string, :ulong], :ulong
+
+  # (Not documented)
+  #
+  # @method initialize_core(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_core, :LLVMInitializeCore, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_transform_utils(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_transform_utils, :LLVMInitializeTransformUtils, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_scalar_opts(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_scalar_opts, :LLVMInitializeScalarOpts, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_obj_carc_opts(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_obj_carc_opts, :LLVMInitializeObjCARCOpts, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_vectorization(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_vectorization, :LLVMInitializeVectorization, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_inst_combine(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_inst_combine, :LLVMInitializeInstCombine, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_ipo(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_ipo, :LLVMInitializeIPO, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_instrumentation(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_instrumentation, :LLVMInitializeInstrumentation, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_analysis(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_analysis, :LLVMInitializeAnalysis, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_ipa(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_ipa, :LLVMInitializeIPA, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_code_gen(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_code_gen, :LLVMInitializeCodeGen, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method initialize_target(r)
+  # @param [OpaquePassRegistry] r
+  # @return [nil]
+  # @scope class
+  attach_function :initialize_target, :LLVMInitializeTarget, [OpaquePassRegistry], :void
+
+  # (Not documented)
+  #
+  # @method parse_ir_in_context(context_ref, mem_buf, out_m, out_message)
+  # @param [OpaqueContext] context_ref
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
+  # @param [FFI::Pointer(*ModuleRef)] out_m
+  # @param [FFI::Pointer(**CharS)] out_message
+  # @return [Integer]
+  # @scope class
+  attach_function :parse_ir_in_context, :LLVMParseIRInContext, [OpaqueContext, :pointer, :pointer, :pointer], :int
+
+  # (Not documented)
+  #
+  # <em>This entry is only for documentation and no real method. The FFI::Enum can be accessed via #enum_type(:linker_mode).</em>
+  #
+  # === Options:
+  # :destroy_source ::
+  #
+  # :preserve_source ::
+  #   Allow source module to be destroyed.
+  #
+  # @method _enum_linker_mode_
+  # @return [Symbol]
+  # @scope class
+  enum :linker_mode, [
+    :destroy_source, 0,
+    :preserve_source, 1
+  ]
+
+  # (Not documented)
+  #
+  # @method link_modules(dest, src, mode, out_message)
+  # @param [OpaqueModule] dest
+  # @param [OpaqueModule] src
+  # @param [Symbol from _enum_linker_mode_] mode
+  # @param [FFI::Pointer(**CharS)] out_message
+  # @return [Integer]
+  # @scope class
+  attach_function :link_modules, :LLVMLinkModules, [OpaqueModule, OpaqueModule, :linker_mode, :pointer], :int
+
+  # This should map exactly onto the C++ enumerator LTOStatus.
+  #
+  # <em>This entry is only for documentation and no real method. The FFI::Enum can be accessed via #enum_type(:llvm_lto_status).</em>
+  #
+  # === Options:
+  # :unknown ::
+  #
+  # :opt_success ::
+  #
+  # :read_success ::
+  #
+  # :read_failure ::
+  #
+  # :write_failure ::
+  #
+  # :no_target ::
+  #
+  # :no_work ::
+  #
+  # :module_merge_failure ::
+  #
+  # :asm_failure ::
+  #
+  # :null_object ::
+  #   Added C-specific error codes
+  #
+  # @method _enum_llvm_lto_status_
+  # @return [Symbol]
+  # @scope class
+  enum :llvm_lto_status, [
+    :unknown, 0,
+    :opt_success, 1,
+    :read_success, 2,
+    :read_failure, 3,
+    :write_failure, 4,
+    :no_target, 5,
+    :no_work, 6,
+    :module_merge_failure, 7,
+    :asm_failure, 8,
+    :null_object, 9
+  ]
+
+  # (Not documented)
+  #
+  # @method llvm_create_optimizer()
+  # @return [FFI::Pointer(LlvmLtoT)]
+  # @scope class
+  attach_function :llvm_create_optimizer, :llvm_create_optimizer, [], :pointer
+
+  # (Not documented)
+  #
+  # @method llvm_destroy_optimizer(lto)
+  # @param [FFI::Pointer(LlvmLtoT)] lto
+  # @return [nil]
+  # @scope class
+  attach_function :llvm_destroy_optimizer, :llvm_destroy_optimizer, [:pointer], :void
+
+  # (Not documented)
+  #
+  # @method llvm_read_object_file(lto, input_filename)
+  # @param [FFI::Pointer(LlvmLtoT)] lto
+  # @param [String] input_filename
+  # @return [Symbol from _enum_llvm_lto_status_]
+  # @scope class
+  attach_function :llvm_read_object_file, :llvm_read_object_file, [:pointer, :string], :llvm_lto_status
+
+  # (Not documented)
+  #
+  # @method llvm_optimize_modules(lto, output_filename)
+  # @param [FFI::Pointer(LlvmLtoT)] lto
+  # @param [String] output_filename
+  # @return [Symbol from _enum_llvm_lto_status_]
+  # @scope class
+  attach_function :llvm_optimize_modules, :llvm_optimize_modules, [:pointer, :string], :llvm_lto_status
+
+  # (Not documented)
+  class OpaqueObjectFile < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueSectionIterator < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueSymbolIterator < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  class OpaqueRelocationIterator < FFI::Struct
+    layout :dummy, :char
+  end
+
+  # (Not documented)
+  #
+  # @method create_object_file(mem_buf)
+  # @param [FFI::Pointer(MemoryBufferRef)] mem_buf
+  # @return [OpaqueObjectFile]
+  # @scope class
+  attach_function :create_object_file, :LLVMCreateObjectFile, [:pointer], OpaqueObjectFile
+
+  # (Not documented)
+  #
+  # @method dispose_object_file(object_file)
+  # @param [OpaqueObjectFile] object_file
+  # @return [nil]
+  # @scope class
+  attach_function :dispose_object_file, :LLVMDisposeObjectFile, [OpaqueObjectFile], :void
+
+  # (Not documented)
+  #
+  # @method get_sections(object_file)
+  # @param [OpaqueObjectFile] object_file
+  # @return [OpaqueSectionIterator]
+  # @scope class
+  attach_function :get_sections, :LLVMGetSections, [OpaqueObjectFile], OpaqueSectionIterator
+
+  # (Not documented)
+  #
+  # @method dispose_section_iterator(si)
+  # @param [OpaqueSectionIterator] si
+  # @return [nil]
+  # @scope class
+  attach_function :dispose_section_iterator, :LLVMDisposeSectionIterator, [OpaqueSectionIterator], :void
+
+  # (Not documented)
+  #
+  # @method is_section_iterator_at_end(object_file, si)
+  # @param [OpaqueObjectFile] object_file
+  # @param [OpaqueSectionIterator] si
+  # @return [Integer]
+  # @scope class
+  attach_function :is_section_iterator_at_end, :LLVMIsSectionIteratorAtEnd, [OpaqueObjectFile, OpaqueSectionIterator], :int
+
+  # (Not documented)
+  #
+  # @method move_to_next_section(si)
+  # @param [OpaqueSectionIterator] si
+  # @return [nil]
+  # @scope class
+  attach_function :move_to_next_section, :LLVMMoveToNextSection, [OpaqueSectionIterator], :void
+
+  # (Not documented)
+  #
+  # @method move_to_containing_section(sect, sym)
+  # @param [OpaqueSectionIterator] sect
+  # @param [OpaqueSymbolIterator] sym
+  # @return [nil]
+  # @scope class
+  attach_function :move_to_containing_section, :LLVMMoveToContainingSection, [OpaqueSectionIterator, OpaqueSymbolIterator], :void
+
+  # (Not documented)
+  #
+  # @method get_symbols(object_file)
+  # @param [OpaqueObjectFile] object_file
+  # @return [OpaqueSymbolIterator]
+  # @scope class
+  attach_function :get_symbols, :LLVMGetSymbols, [OpaqueObjectFile], OpaqueSymbolIterator
+
+  # (Not documented)
+  #
+  # @method dispose_symbol_iterator(si)
+  # @param [OpaqueSymbolIterator] si
+  # @return [nil]
+  # @scope class
+  attach_function :dispose_symbol_iterator, :LLVMDisposeSymbolIterator, [OpaqueSymbolIterator], :void
+
+  # (Not documented)
+  #
+  # @method is_symbol_iterator_at_end(object_file, si)
+  # @param [OpaqueObjectFile] object_file
+  # @param [OpaqueSymbolIterator] si
+  # @return [Integer]
+  # @scope class
+  attach_function :is_symbol_iterator_at_end, :LLVMIsSymbolIteratorAtEnd, [OpaqueObjectFile, OpaqueSymbolIterator], :int
+
+  # (Not documented)
+  #
+  # @method move_to_next_symbol(si)
+  # @param [OpaqueSymbolIterator] si
+  # @return [nil]
+  # @scope class
+  attach_function :move_to_next_symbol, :LLVMMoveToNextSymbol, [OpaqueSymbolIterator], :void
+
+  # (Not documented)
+  #
+  # @method get_section_name(si)
+  # @param [OpaqueSectionIterator] si
+  # @return [String]
+  # @scope class
+  attach_function :get_section_name, :LLVMGetSectionName, [OpaqueSectionIterator], :string
+
+  # (Not documented)
+  #
+  # @method get_section_size(si)
+  # @param [OpaqueSectionIterator] si
+  # @return [Integer]
+  # @scope class
+  attach_function :get_section_size, :LLVMGetSectionSize, [OpaqueSectionIterator], :ulong
+
+  # (Not documented)
+  #
+  # @method get_section_contents(si)
+  # @param [OpaqueSectionIterator] si
+  # @return [String]
+  # @scope class
+  attach_function :get_section_contents, :LLVMGetSectionContents, [OpaqueSectionIterator], :string
+
+  # (Not documented)
+  #
+  # @method get_section_address(si)
+  # @param [OpaqueSectionIterator] si
+  # @return [Integer]
+  # @scope class
+  attach_function :get_section_address, :LLVMGetSectionAddress, [OpaqueSectionIterator], :ulong
+
+  # (Not documented)
+  #
+  # @method get_section_contains_symbol(si, sym)
+  # @param [OpaqueSectionIterator] si
+  # @param [OpaqueSymbolIterator] sym
+  # @return [Integer]
+  # @scope class
+  attach_function :get_section_contains_symbol, :LLVMGetSectionContainsSymbol, [OpaqueSectionIterator, OpaqueSymbolIterator], :int
+
+  # (Not documented)
+  #
+  # @method get_relocations(section)
+  # @param [OpaqueSectionIterator] section
+  # @return [OpaqueRelocationIterator]
+  # @scope class
+  attach_function :get_relocations, :LLVMGetRelocations, [OpaqueSectionIterator], OpaqueRelocationIterator
+
+  # (Not documented)
+  #
+  # @method dispose_relocation_iterator(ri)
+  # @param [OpaqueRelocationIterator] ri
+  # @return [nil]
+  # @scope class
+  attach_function :dispose_relocation_iterator, :LLVMDisposeRelocationIterator, [OpaqueRelocationIterator], :void
+
+  # (Not documented)
+  #
+  # @method is_relocation_iterator_at_end(section, ri)
+  # @param [OpaqueSectionIterator] section
+  # @param [OpaqueRelocationIterator] ri
+  # @return [Integer]
+  # @scope class
+  attach_function :is_relocation_iterator_at_end, :LLVMIsRelocationIteratorAtEnd, [OpaqueSectionIterator, OpaqueRelocationIterator], :int
+
+  # (Not documented)
+  #
+  # @method move_to_next_relocation(ri)
+  # @param [OpaqueRelocationIterator] ri
+  # @return [nil]
+  # @scope class
+  attach_function :move_to_next_relocation, :LLVMMoveToNextRelocation, [OpaqueRelocationIterator], :void
+
+  # (Not documented)
+  #
+  # @method get_symbol_name(si)
+  # @param [OpaqueSymbolIterator] si
+  # @return [String]
+  # @scope class
+  attach_function :get_symbol_name, :LLVMGetSymbolName, [OpaqueSymbolIterator], :string
+
+  # (Not documented)
+  #
+  # @method get_symbol_address(si)
+  # @param [OpaqueSymbolIterator] si
+  # @return [Integer]
+  # @scope class
+  attach_function :get_symbol_address, :LLVMGetSymbolAddress, [OpaqueSymbolIterator], :ulong
+
+  # (Not documented)
+  #
+  # @method get_symbol_size(si)
+  # @param [OpaqueSymbolIterator] si
+  # @return [Integer]
+  # @scope class
+  attach_function :get_symbol_size, :LLVMGetSymbolSize, [OpaqueSymbolIterator], :ulong
+
+  # (Not documented)
+  #
+  # @method get_relocation_address(ri)
+  # @param [OpaqueRelocationIterator] ri
+  # @return [Integer]
+  # @scope class
+  attach_function :get_relocation_address, :LLVMGetRelocationAddress, [OpaqueRelocationIterator], :ulong
+
+  # (Not documented)
+  #
+  # @method get_relocation_offset(ri)
+  # @param [OpaqueRelocationIterator] ri
+  # @return [Integer]
+  # @scope class
+  attach_function :get_relocation_offset, :LLVMGetRelocationOffset, [OpaqueRelocationIterator], :ulong
+
+  # (Not documented)
+  #
+  # @method get_relocation_symbol(ri)
+  # @param [OpaqueRelocationIterator] ri
+  # @return [OpaqueSymbolIterator]
+  # @scope class
+  attach_function :get_relocation_symbol, :LLVMGetRelocationSymbol, [OpaqueRelocationIterator], OpaqueSymbolIterator
+
+  # (Not documented)
+  #
+  # @method get_relocation_type(ri)
+  # @param [OpaqueRelocationIterator] ri
+  # @return [Integer]
+  # @scope class
+  attach_function :get_relocation_type, :LLVMGetRelocationType, [OpaqueRelocationIterator], :ulong
+
+  # (Not documented)
+  #
+  # @method get_relocation_type_name(ri)
+  # @param [OpaqueRelocationIterator] ri
+  # @return [String]
+  # @scope class
+  attach_function :get_relocation_type_name, :LLVMGetRelocationTypeName, [OpaqueRelocationIterator], :string
+
+  # (Not documented)
+  #
+  # @method get_relocation_value_string(ri)
+  # @param [OpaqueRelocationIterator] ri
+  # @return [String]
+  # @scope class
+  attach_function :get_relocation_value_string, :LLVMGetRelocationValueString, [OpaqueRelocationIterator], :string
 
   # (Not documented)
   #
@@ -6264,13 +6847,6 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
-  # @method link_in_jit()
-  # @return [nil]
-  # @scope class
-  attach_function :link_in_jit, :LLVMLinkInJIT, [], :void
-
-  # (Not documented)
-  #
   # @method link_in_mcjit()
   # @return [nil]
   # @scope class
@@ -6623,6 +7199,24 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method get_global_value_address(ee, name)
+  # @param [OpaqueExecutionEngine] ee
+  # @param [String] name
+  # @return [Integer]
+  # @scope class
+  attach_function :get_global_value_address, :LLVMGetGlobalValueAddress, [OpaqueExecutionEngine, :string], :ulong
+
+  # (Not documented)
+  #
+  # @method get_function_address(ee, name)
+  # @param [OpaqueExecutionEngine] ee
+  # @param [String] name
+  # @return [Integer]
+  # @scope class
+  attach_function :get_function_address, :LLVMGetFunctionAddress, [OpaqueExecutionEngine, :string], :ulong
+
+  # (Not documented)
+  #
   # <em>This entry is only for documentation and no real method.</em>
   #
   # @method _callback_memory_manager_allocate_code_section_callback_(uint8_t, opaque, size, alignment, section_id, section_name)
@@ -6683,474 +7277,6 @@ module RCGTK::Bindings
   # @return [nil]
   # @scope class
   attach_function :dispose_mcjit_memory_manager, :LLVMDisposeMCJITMemoryManager, [OpaqueMCJITMemoryManager], :void
-
-  # (Not documented)
-  #
-  # @method initialize_core(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_core, :LLVMInitializeCore, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_transform_utils(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_transform_utils, :LLVMInitializeTransformUtils, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_scalar_opts(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_scalar_opts, :LLVMInitializeScalarOpts, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_obj_carc_opts(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_obj_carc_opts, :LLVMInitializeObjCARCOpts, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_vectorization(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_vectorization, :LLVMInitializeVectorization, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_inst_combine(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_inst_combine, :LLVMInitializeInstCombine, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_ipo(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_ipo, :LLVMInitializeIPO, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_instrumentation(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_instrumentation, :LLVMInitializeInstrumentation, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_analysis(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_analysis, :LLVMInitializeAnalysis, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_ipa(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_ipa, :LLVMInitializeIPA, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_code_gen(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_code_gen, :LLVMInitializeCodeGen, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method initialize_target(r)
-  # @param [OpaquePassRegistry] r
-  # @return [nil]
-  # @scope class
-  attach_function :initialize_target, :LLVMInitializeTarget, [OpaquePassRegistry], :void
-
-  # (Not documented)
-  #
-  # @method parse_ir_in_context(context_ref, mem_buf, out_m, out_message)
-  # @param [OpaqueContext] context_ref
-  # @param [OpaqueMemoryBuffer] mem_buf
-  # @param [FFI::Pointer(*ModuleRef)] out_m
-  # @param [FFI::Pointer(**CharS)] out_message
-  # @return [Integer]
-  # @scope class
-  attach_function :parse_ir_in_context, :LLVMParseIRInContext, [OpaqueContext, OpaqueMemoryBuffer, :pointer, :pointer], :int
-
-  # (Not documented)
-  #
-  # <em>This entry is only for documentation and no real method. The FFI::Enum can be accessed via #enum_type(:linker_mode).</em>
-  #
-  # === Options:
-  # :destroy_source ::
-  #
-  # :preserve_source ::
-  #   Allow source module to be destroyed.
-  #
-  # @method _enum_linker_mode_
-  # @return [Symbol]
-  # @scope class
-  enum :linker_mode, [
-    :destroy_source, 0,
-    :preserve_source, 1
-  ]
-
-  # (Not documented)
-  #
-  # @method link_modules(dest, src, mode, out_message)
-  # @param [OpaqueModule] dest
-  # @param [OpaqueModule] src
-  # @param [Symbol from _enum_linker_mode_] mode
-  # @param [FFI::Pointer(**CharS)] out_message
-  # @return [Integer]
-  # @scope class
-  attach_function :link_modules, :LLVMLinkModules, [OpaqueModule, OpaqueModule, :linker_mode, :pointer], :int
-
-  # This should map exactly onto the C++ enumerator LTOStatus.
-  #
-  # <em>This entry is only for documentation and no real method. The FFI::Enum can be accessed via #enum_type(:llvm_lto_status).</em>
-  #
-  # === Options:
-  # :unknown ::
-  #
-  # :opt_success ::
-  #
-  # :read_success ::
-  #
-  # :read_failure ::
-  #
-  # :write_failure ::
-  #
-  # :no_target ::
-  #
-  # :no_work ::
-  #
-  # :module_merge_failure ::
-  #
-  # :asm_failure ::
-  #
-  # :null_object ::
-  #   Added C-specific error codes
-  #
-  # @method _enum_llvm_lto_status_
-  # @return [Symbol]
-  # @scope class
-  enum :llvm_lto_status, [
-    :unknown, 0,
-    :opt_success, 1,
-    :read_success, 2,
-    :read_failure, 3,
-    :write_failure, 4,
-    :no_target, 5,
-    :no_work, 6,
-    :module_merge_failure, 7,
-    :asm_failure, 8,
-    :null_object, 9
-  ]
-
-  # (Not documented)
-  #
-  # @method llvm_create_optimizer()
-  # @return [FFI::Pointer(LlvmLtoT)]
-  # @scope class
-  attach_function :llvm_create_optimizer, :llvm_create_optimizer, [], :pointer
-
-  # (Not documented)
-  #
-  # @method llvm_destroy_optimizer(lto)
-  # @param [FFI::Pointer(LlvmLtoT)] lto
-  # @return [nil]
-  # @scope class
-  attach_function :llvm_destroy_optimizer, :llvm_destroy_optimizer, [:pointer], :void
-
-  # (Not documented)
-  #
-  # @method llvm_read_object_file(lto, input_filename)
-  # @param [FFI::Pointer(LlvmLtoT)] lto
-  # @param [String] input_filename
-  # @return [Symbol from _enum_llvm_lto_status_]
-  # @scope class
-  attach_function :llvm_read_object_file, :llvm_read_object_file, [:pointer, :string], :llvm_lto_status
-
-  # (Not documented)
-  #
-  # @method llvm_optimize_modules(lto, output_filename)
-  # @param [FFI::Pointer(LlvmLtoT)] lto
-  # @param [String] output_filename
-  # @return [Symbol from _enum_llvm_lto_status_]
-  # @scope class
-  attach_function :llvm_optimize_modules, :llvm_optimize_modules, [:pointer, :string], :llvm_lto_status
-
-  # (Not documented)
-  class OpaqueObjectFile < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # (Not documented)
-  class OpaqueSectionIterator < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # (Not documented)
-  class OpaqueSymbolIterator < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # (Not documented)
-  class OpaqueRelocationIterator < FFI::Struct
-    layout :dummy, :char
-  end
-
-  # (Not documented)
-  #
-  # @method create_object_file(mem_buf)
-  # @param [OpaqueMemoryBuffer] mem_buf
-  # @return [OpaqueObjectFile]
-  # @scope class
-  attach_function :create_object_file, :LLVMCreateObjectFile, [OpaqueMemoryBuffer], OpaqueObjectFile
-
-  # (Not documented)
-  #
-  # @method dispose_object_file(object_file)
-  # @param [OpaqueObjectFile] object_file
-  # @return [nil]
-  # @scope class
-  attach_function :dispose_object_file, :LLVMDisposeObjectFile, [OpaqueObjectFile], :void
-
-  # (Not documented)
-  #
-  # @method get_sections(object_file)
-  # @param [OpaqueObjectFile] object_file
-  # @return [OpaqueSectionIterator]
-  # @scope class
-  attach_function :get_sections, :LLVMGetSections, [OpaqueObjectFile], OpaqueSectionIterator
-
-  # (Not documented)
-  #
-  # @method dispose_section_iterator(si)
-  # @param [OpaqueSectionIterator] si
-  # @return [nil]
-  # @scope class
-  attach_function :dispose_section_iterator, :LLVMDisposeSectionIterator, [OpaqueSectionIterator], :void
-
-  # (Not documented)
-  #
-  # @method is_section_iterator_at_end(object_file, si)
-  # @param [OpaqueObjectFile] object_file
-  # @param [OpaqueSectionIterator] si
-  # @return [Integer]
-  # @scope class
-  attach_function :is_section_iterator_at_end, :LLVMIsSectionIteratorAtEnd, [OpaqueObjectFile, OpaqueSectionIterator], :int
-
-  # (Not documented)
-  #
-  # @method move_to_next_section(si)
-  # @param [OpaqueSectionIterator] si
-  # @return [nil]
-  # @scope class
-  attach_function :move_to_next_section, :LLVMMoveToNextSection, [OpaqueSectionIterator], :void
-
-  # (Not documented)
-  #
-  # @method move_to_containing_section(sect, sym)
-  # @param [OpaqueSectionIterator] sect
-  # @param [OpaqueSymbolIterator] sym
-  # @return [nil]
-  # @scope class
-  attach_function :move_to_containing_section, :LLVMMoveToContainingSection, [OpaqueSectionIterator, OpaqueSymbolIterator], :void
-
-  # (Not documented)
-  #
-  # @method get_symbols(object_file)
-  # @param [OpaqueObjectFile] object_file
-  # @return [OpaqueSymbolIterator]
-  # @scope class
-  attach_function :get_symbols, :LLVMGetSymbols, [OpaqueObjectFile], OpaqueSymbolIterator
-
-  # (Not documented)
-  #
-  # @method dispose_symbol_iterator(si)
-  # @param [OpaqueSymbolIterator] si
-  # @return [nil]
-  # @scope class
-  attach_function :dispose_symbol_iterator, :LLVMDisposeSymbolIterator, [OpaqueSymbolIterator], :void
-
-  # (Not documented)
-  #
-  # @method is_symbol_iterator_at_end(object_file, si)
-  # @param [OpaqueObjectFile] object_file
-  # @param [OpaqueSymbolIterator] si
-  # @return [Integer]
-  # @scope class
-  attach_function :is_symbol_iterator_at_end, :LLVMIsSymbolIteratorAtEnd, [OpaqueObjectFile, OpaqueSymbolIterator], :int
-
-  # (Not documented)
-  #
-  # @method move_to_next_symbol(si)
-  # @param [OpaqueSymbolIterator] si
-  # @return [nil]
-  # @scope class
-  attach_function :move_to_next_symbol, :LLVMMoveToNextSymbol, [OpaqueSymbolIterator], :void
-
-  # (Not documented)
-  #
-  # @method get_section_name(si)
-  # @param [OpaqueSectionIterator] si
-  # @return [String]
-  # @scope class
-  attach_function :get_section_name, :LLVMGetSectionName, [OpaqueSectionIterator], :string
-
-  # (Not documented)
-  #
-  # @method get_section_size(si)
-  # @param [OpaqueSectionIterator] si
-  # @return [Integer]
-  # @scope class
-  attach_function :get_section_size, :LLVMGetSectionSize, [OpaqueSectionIterator], :ulong
-
-  # (Not documented)
-  #
-  # @method get_section_contents(si)
-  # @param [OpaqueSectionIterator] si
-  # @return [String]
-  # @scope class
-  attach_function :get_section_contents, :LLVMGetSectionContents, [OpaqueSectionIterator], :string
-
-  # (Not documented)
-  #
-  # @method get_section_address(si)
-  # @param [OpaqueSectionIterator] si
-  # @return [Integer]
-  # @scope class
-  attach_function :get_section_address, :LLVMGetSectionAddress, [OpaqueSectionIterator], :ulong
-
-  # (Not documented)
-  #
-  # @method get_section_contains_symbol(si, sym)
-  # @param [OpaqueSectionIterator] si
-  # @param [OpaqueSymbolIterator] sym
-  # @return [Integer]
-  # @scope class
-  attach_function :get_section_contains_symbol, :LLVMGetSectionContainsSymbol, [OpaqueSectionIterator, OpaqueSymbolIterator], :int
-
-  # (Not documented)
-  #
-  # @method get_relocations(section)
-  # @param [OpaqueSectionIterator] section
-  # @return [OpaqueRelocationIterator]
-  # @scope class
-  attach_function :get_relocations, :LLVMGetRelocations, [OpaqueSectionIterator], OpaqueRelocationIterator
-
-  # (Not documented)
-  #
-  # @method dispose_relocation_iterator(ri)
-  # @param [OpaqueRelocationIterator] ri
-  # @return [nil]
-  # @scope class
-  attach_function :dispose_relocation_iterator, :LLVMDisposeRelocationIterator, [OpaqueRelocationIterator], :void
-
-  # (Not documented)
-  #
-  # @method is_relocation_iterator_at_end(section, ri)
-  # @param [OpaqueSectionIterator] section
-  # @param [OpaqueRelocationIterator] ri
-  # @return [Integer]
-  # @scope class
-  attach_function :is_relocation_iterator_at_end, :LLVMIsRelocationIteratorAtEnd, [OpaqueSectionIterator, OpaqueRelocationIterator], :int
-
-  # (Not documented)
-  #
-  # @method move_to_next_relocation(ri)
-  # @param [OpaqueRelocationIterator] ri
-  # @return [nil]
-  # @scope class
-  attach_function :move_to_next_relocation, :LLVMMoveToNextRelocation, [OpaqueRelocationIterator], :void
-
-  # (Not documented)
-  #
-  # @method get_symbol_name(si)
-  # @param [OpaqueSymbolIterator] si
-  # @return [String]
-  # @scope class
-  attach_function :get_symbol_name, :LLVMGetSymbolName, [OpaqueSymbolIterator], :string
-
-  # (Not documented)
-  #
-  # @method get_symbol_address(si)
-  # @param [OpaqueSymbolIterator] si
-  # @return [Integer]
-  # @scope class
-  attach_function :get_symbol_address, :LLVMGetSymbolAddress, [OpaqueSymbolIterator], :ulong
-
-  # (Not documented)
-  #
-  # @method get_symbol_size(si)
-  # @param [OpaqueSymbolIterator] si
-  # @return [Integer]
-  # @scope class
-  attach_function :get_symbol_size, :LLVMGetSymbolSize, [OpaqueSymbolIterator], :ulong
-
-  # (Not documented)
-  #
-  # @method get_relocation_address(ri)
-  # @param [OpaqueRelocationIterator] ri
-  # @return [Integer]
-  # @scope class
-  attach_function :get_relocation_address, :LLVMGetRelocationAddress, [OpaqueRelocationIterator], :ulong
-
-  # (Not documented)
-  #
-  # @method get_relocation_offset(ri)
-  # @param [OpaqueRelocationIterator] ri
-  # @return [Integer]
-  # @scope class
-  attach_function :get_relocation_offset, :LLVMGetRelocationOffset, [OpaqueRelocationIterator], :ulong
-
-  # (Not documented)
-  #
-  # @method get_relocation_symbol(ri)
-  # @param [OpaqueRelocationIterator] ri
-  # @return [OpaqueSymbolIterator]
-  # @scope class
-  attach_function :get_relocation_symbol, :LLVMGetRelocationSymbol, [OpaqueRelocationIterator], OpaqueSymbolIterator
-
-  # (Not documented)
-  #
-  # @method get_relocation_type(ri)
-  # @param [OpaqueRelocationIterator] ri
-  # @return [Integer]
-  # @scope class
-  attach_function :get_relocation_type, :LLVMGetRelocationType, [OpaqueRelocationIterator], :ulong
-
-  # (Not documented)
-  #
-  # @method get_relocation_type_name(ri)
-  # @param [OpaqueRelocationIterator] ri
-  # @return [String]
-  # @scope class
-  attach_function :get_relocation_type_name, :LLVMGetRelocationTypeName, [OpaqueRelocationIterator], :string
-
-  # (Not documented)
-  #
-  # @method get_relocation_value_string(ri)
-  # @param [OpaqueRelocationIterator] ri
-  # @return [String]
-  # @scope class
-  attach_function :get_relocation_value_string, :LLVMGetRelocationValueString, [OpaqueRelocationIterator], :string
 
   # (Not documented)
   #
@@ -7378,6 +7504,14 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method add_alignment_from_assumptions_pass(pm)
+  # @param [OpaquePassManager] pm
+  # @return [nil]
+  # @scope class
+  attach_function :add_alignment_from_assumptions_pass, :LLVMAddAlignmentFromAssumptionsPass, [OpaquePassManager], :void
+
+  # (Not documented)
+  #
   # @method add_cfg_simplification_pass(pm)
   # @param [OpaquePassManager] pm
   # @return [nil]
@@ -7514,6 +7648,14 @@ module RCGTK::Bindings
 
   # (Not documented)
   #
+  # @method add_lower_switch_pass(pm)
+  # @param [OpaquePassManager] pm
+  # @return [nil]
+  # @scope class
+  attach_function :add_lower_switch_pass, :LLVMAddLowerSwitchPass, [OpaquePassManager], :void
+
+  # (Not documented)
+  #
   # @method add_promote_memory_to_register_pass(pm)
   # @param [OpaquePassManager] pm
   # @return [nil]
@@ -7632,6 +7774,14 @@ module RCGTK::Bindings
   # @return [nil]
   # @scope class
   attach_function :add_type_based_alias_analysis_pass, :LLVMAddTypeBasedAliasAnalysisPass, [OpaquePassManager], :void
+
+  # (Not documented)
+  #
+  # @method add_scoped_no_alias_aa_pass(pm)
+  # @param [OpaquePassManager] pm
+  # @return [nil]
+  # @scope class
+  attach_function :add_scoped_no_alias_aa_pass, :LLVMAddScopedNoAliasAAPass, [OpaquePassManager], :void
 
   # (Not documented)
   #

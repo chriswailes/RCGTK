@@ -125,6 +125,11 @@ module RCGTK
 			Context.new(Bindings.get_module_context(@ptr))
 		end
 
+		# @return [Module]  Clone of this module.
+		def clone
+			Module.new(Bindings.clone_module(@ptr))
+		end
+
 		# Print the LLVM IR representation of this value to standard error.
 		# This function is the debugging version of the more general purpose
 		# {#print} method.
@@ -244,6 +249,13 @@ module RCGTK
 			elsif overloaded.is_a?(String)
 				Bindings.write_bitcode_to_file(@ptr, overloaded)
 			end
+		end
+
+		# Write the module as LLVM bitcode to a memory buffer.
+		#
+		# @return [MemoryBuffer]  Memory buffer containing LLVM bitcode
+		def write_bitcode_to_memory_buffer
+			MemoryBuffer.new(Bindings.write_bitcode_to_memory_buffer(@ptr))
 		end
 
 		# Verify that the module is valid LLVM IR.

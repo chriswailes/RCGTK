@@ -75,6 +75,16 @@ module RCGTK
 			end
 		end
 
+		# @return [Integer]  Memory address of the function.
+		def function_address(name)
+			Bindings.get_function_address(@ptr, name)
+		end
+
+		# @return [Integer]  Memory address of the global value.
+		def global_value_address(name)
+			Bindings.get_global_value_address(@ptr, name)
+		end
+
 		# Builds a pointer to a global value.
 		#
 		# @param [GlobalValue]  global  Value you want a pointer to.
